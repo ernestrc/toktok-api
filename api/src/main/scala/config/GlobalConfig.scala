@@ -2,6 +2,7 @@ package config
 
 import java.util.concurrent.TimeUnit
 
+import com.novus.salat.Context
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration.FiniteDuration
@@ -9,6 +10,10 @@ import scala.concurrent.duration.FiniteDuration
 object GlobalConfig {
 
   private val config: Config = ConfigFactory.load()
+
+  val mongoHost = config.getString("toktok.source.host")
+
+  val mongoDb = config.getString("toktok.source.db")
 
   val PORT = config.getInt("toktok.port")
 

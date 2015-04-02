@@ -1,13 +1,20 @@
 package utils
 
 import com.novus.salat.Grater
+import model.SID
+import org.bson.types.ObjectId
 import spray.http._
-import spray.httpx.marshalling.{ToResponseMarshallable, ToResponseMarshaller, Marshaller}
+import spray.httpx.marshalling.Marshaller
 import spray.httpx.unmarshalling._
+import unstable.macros.{InjectedTypeHint, TypeHint}
 
-import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 object Implicits {
+
+  implicit class pimpedObjectId(_id: ObjectId){
+    def toSid[T : ClassTag]:SID[T] = SID.apply[T](_id.toString)
+  }
 
   implicit def graterUnmarshallerConverter[T <: AnyRef](grater: Grater[T]): Unmarshaller[T] =
     graterUnmarshaller(grater)
@@ -31,4 +38,8 @@ object Implicits {
       if(!pretty) grater.toPrettyJSON(value)
       else grater.toCompactJSON(value)
     }
+
+  implicit class StringCanHint(s:String){
+    def toHint: TypeHint = InjectedTypeHint(s)
+  }
 }

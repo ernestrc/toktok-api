@@ -4,15 +4,15 @@ import akka.io.IO
 import api.HttpHandler
 import api.endpoints.UserEndpoint
 import config.GlobalConfig
+import service.BootedSystem
+import service.actors.{UserActor, UsersGuardian}
 import spray.can.Http
-import system.BootedSystem
-import system.actors.UserActor
 
 object Boot extends App with BootedSystem {
 
   implicit val log: LoggingAdapter = system.log
 
-  val userActor = system.actorOf(Props[UserActor], "user")
+  val users = system.actorOf(Props[UsersGuardian], "users")
 
   val endpoints = new UserEndpoint() :: Nil
 
@@ -22,4 +22,4 @@ object Boot extends App with BootedSystem {
 
   log.info(s"TokTok api booted up in host ${GlobalConfig.HOST} and port ${GlobalConfig.PORT}")
 
-  }
+}
