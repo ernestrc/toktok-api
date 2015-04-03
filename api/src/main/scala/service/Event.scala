@@ -1,14 +1,11 @@
 package service
 
-import org.bson.types.ObjectId
+import com.novus.salat.annotations.raw.Salat
 import unstable.macros.{InjectedTypeHint, TypeHint}
 
-/**
- * Created by ernest on 4/1/15.
- */
+@Salat
 trait Event {
 
-  val _id: Option[ObjectId]
-  val typeHint: TypeHint = InjectedTypeHint(this.getClass.getName)
+  val typeHint: TypeHint = InjectedTypeHint(this.getClass.getCanonicalName)
 
 }

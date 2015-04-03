@@ -31,4 +31,8 @@ object GlobalConfig {
     FiniteDuration(config.getDuration("toktok.actors.timeout",
       TimeUnit.SECONDS), TimeUnit.SECONDS)
 
+  val ENDPOINT_FALLBACK_TIMEOUT: FiniteDuration =
+    FiniteDuration(config.getDuration("toktok.actors.endpoint-fallback",
+      TimeUnit.SECONDS), TimeUnit.SECONDS)
+
 }

@@ -2,6 +2,7 @@ package model
 
 import com.novus.salat.{Grater, _}
 import com.novus.salat.global._
+import org.bson.types.ObjectId
 
 /**
  * Basic reporting class.
@@ -9,7 +10,7 @@ import com.novus.salat.global._
  * @param success Quick check if task was successful
  * @param errors List of errors, by default empty.
  */
-case class Receipt(success: Boolean, updated: SID[_] = SID.empty[AnyRef],
+case class Receipt(success: Boolean, updated: Option[ObjectId] = None,
                    message: String = "", errors: List[String] = List.empty)
 
 object Receipt {
