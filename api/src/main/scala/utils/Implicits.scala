@@ -1,5 +1,6 @@
 package utils
 
+import akka.event.LoggingAdapter
 import com.novus.salat.Grater
 import model.SID
 import org.bson.types.ObjectId
@@ -8,12 +9,21 @@ import spray.httpx.marshalling.Marshaller
 import spray.httpx.unmarshalling._
 import unstable.macros.{InjectedTypeHint, TypeHint}
 
-import scala.reflect.ClassTag
-
 object Implicits {
 
   implicit class pimpedObjectId(_id: ObjectId){
-    def toSid[T : ClassTag]:SID[T] = SID.apply[T](_id.toString)
+    def toSid:SID = _id.toString
+  }
+
+  implicit class logAndReturn[T](any: T)(implicit log: LoggingAdapter){
+    def Ω(message:T ⇒ String) = {
+      log.debug(message(any))
+      any
+    }
+  }
+
+  implicit class pimpedSID(id: SID){
+    def toObjectId:ObjectId = new ObjectId(id.toString)
   }
 
   implicit def graterUnmarshallerConverter[T <: AnyRef](grater: Grater[T]): Unmarshaller[T] =

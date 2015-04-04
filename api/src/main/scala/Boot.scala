@@ -2,7 +2,7 @@ import akka.actor.Props
 import akka.event.LoggingAdapter
 import akka.io.IO
 import api.HttpHandler
-import api.endpoints.UserEndpoint
+import api.endpoints.{InternalEndpoint, UserEndpoint}
 import config.GlobalConfig
 import service.BootedSystem
 import service.actors.{UserActor, UsersGuardian}
@@ -14,7 +14,7 @@ object Boot extends App with BootedSystem {
 
   val users = system.actorOf(Props[UsersGuardian], "users")
 
-  val endpoints = new UserEndpoint() :: Nil
+  val endpoints = new UserEndpoint() :: new InternalEndpoint() :: Nil
 
   val httpHandler = system.actorOf(Props(classOf[HttpHandler], endpoints))
 

@@ -1,9 +1,10 @@
 package dal
 
+import akka.event.LoggingAdapter
 import com.mongodb.casbah.Imports
 import com.mongodb.casbah.Imports._
 import com.novus.salat._
-import org.slf4j.LoggerFactory
+import model.SID
 import service.Event
 import unstable.macros.TypeHint
 import utils.Implicits._
@@ -15,7 +16,8 @@ import scala.util.Try
  * Created by ernest on 4/1/15.
  */
 class MongoSource[T <: Event : ClassTag](db: MongoDB,
-                                         serializers: PartialFunction[TypeHint, Grater[_ <: T]]) {
+                                         serializers: PartialFunction[TypeHint, Grater[_ <: T]])
+(implicit log: LoggingAdapter) {
 
   private def fromHintTo[E](mongoObject: Imports.DBObject) = {
     serializers(mongoObject.as[String]("_typeHint").toHint)
@@ -23,35 +25,35 @@ class MongoSource[T <: Event : ClassTag](db: MongoDB,
       .asInstanceOf[E]
   }
 
-  val log = LoggerFactory.getLogger(this.getClass)
-
   val collectionT = db(implicitly[ClassTag[T]].runtimeClass.getSimpleName)
 
-  def findByEntityId(id: ObjectId): List[_ <: T] = {
-    collectionT.find(MongoDBObject("_id" → id)).toList.map { mongoObject ⇒
+  def findAllByEntityId(id: SID): List[_ <: T] = {
+    collectionT.find(MongoDBObject("entityId" → id)).toList.map { mongoObject ⇒
       serializers(mongoObject.as[String]("_typeHint").toHint).asObject(mongoObject)
     }
   }
 
   def subscribe[E <: T]: Try[Int] = ???
 
-  def save[E <: T](event: E): Try[ObjectId] = Try {
+  def save[E <: T](event: E): Try[SID] = Try {
     val obj = serializers(event.typeHint).asInstanceOf[Grater[E]].asDBObject(event)
     collectionT.insert(obj)
-    obj._id.get
+    obj._id.get.toSid
   }
 
-  def findOneById[E <: T](uuid: ObjectId)(implicit tag: ClassTag[E]): Option[E] = {
+  def findOneByObjectId[E <: T](id: ObjectId)(implicit tag: ClassTag[E]): Option[E] = {
     val clazz = tag.runtimeClass.getCanonicalName
     collectionT.findOne(MongoDBObject(
-      "_typeHint" → clazz, "uuid" → uuid
+      "_typeHint" → clazz, "_id" → id
     )).map(fromHintTo[E])
   }
 
   def findAllEventsOfType[E <: T](implicit tag: ClassTag[E]): List[E] = {
     val clazz = tag.runtimeClass.getCanonicalName
     log.debug(s"Fetching all events of type $clazz")
-    collectionT.find("_typeHint" $eq clazz).toList.map(fromHintTo[E])
+    collectionT.find("_typeHint" $eq clazz).toList.map(fromHintTo[E]) Ω { list ⇒
+      s"Found events: $list"
+    }
   }
 
 }

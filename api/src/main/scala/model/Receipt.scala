@@ -1,16 +1,15 @@
 package model
 
-import com.novus.salat.{Grater, _}
 import com.novus.salat.global._
-import org.bson.types.ObjectId
+import com.novus.salat.{Grater, _}
 
 /**
- * Basic reporting class.
+ * Basic command-side reporting class.
  *
  * @param success Quick check if task was successful
  * @param errors List of errors, by default empty.
  */
-case class Receipt(success: Boolean, updated: Option[ObjectId] = None,
+case class Receipt(success: Boolean, updated: SID = "",
                    message: String = "", errors: List[String] = List.empty)
 
 object Receipt {

@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import com.novus.salat.Context
 import com.typesafe.config.{Config, ConfigFactory}
 
+import scala.collection.convert.Wrappers
 import scala.concurrent.duration.FiniteDuration
 
 object GlobalConfig {
@@ -34,5 +35,8 @@ object GlobalConfig {
   val ENDPOINT_FALLBACK_TIMEOUT: FiniteDuration =
     FiniteDuration(config.getDuration("toktok.actors.endpoint-fallback",
       TimeUnit.SECONDS), TimeUnit.SECONDS)
+
+  val WHITELIST_EMAIL =
+    Wrappers.JListWrapper(config.getStringList("toktok.email-whitelist")).toList
 
 }

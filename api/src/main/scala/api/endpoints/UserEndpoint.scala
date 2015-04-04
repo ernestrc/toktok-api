@@ -10,6 +10,8 @@ import model.Receipt
 import service.actors.{ChangeUserPasswordCommand, CreateUserCommand}
 import spray.routing.Route
 
+import scala.concurrent.Future
+
 class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
   import system.dispatcher
@@ -20,13 +22,15 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
   val usersSelection: ActorSelection = system.actorSelection(system / entityPath)
   implicit val receiptGrater = graterMarshallerConverter(Receipt.receiptGrater)
+  implicit val graterCreateUser = grater[CreateUserCommand]
 
   implicit val timeout: Timeout = GlobalConfig.ENDPOINT_TIMEOUT
+  val fallbackTimeout: Timeout = GlobalConfig.ENDPOINT_FALLBACK_TIMEOUT
 
   def route: Route =
     path(entityPath) {
       post {
-        entity(as[CreateUserCommand](grater[CreateUserCommand])) { cmd: CreateUserCommand ⇒
+        entity(as[CreateUserCommand](graterCreateUser)) { cmd: CreateUserCommand ⇒
           complete {
             usersSelection.ask(cmd).mapTo[Receipt]
           }
@@ -50,12 +54,12 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
       post {
         entity(as[ChangeUserPasswordCommand](grater[ChangeUserPasswordCommand])) { cmd ⇒
           complete {
-            entityActor(cmd.uuid.get).ask(cmd)(GlobalConfig.ENDPOINT_FALLBACK_TIMEOUT)
-              .mapTo[Receipt]
-              .fallbackTo {
-              log.warning(s"Worker of ${cmd.uuid.get} is not responding!")
-              usersSelection.ask(cmd).mapTo[Receipt]
-            }
+            entityActor(cmd.entityId).ask(cmd)(fallbackTimeout)
+              .recoverWith{
+              case exception: Exception ⇒
+                log.warning(s"Worker of ${cmd.entityId} is not responding!")
+                usersSelection.ask(cmd)
+            }.mapTo[Receipt]
           }
         }
       }
