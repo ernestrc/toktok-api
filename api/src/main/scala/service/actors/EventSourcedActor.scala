@@ -17,16 +17,16 @@ trait EventSourcedActor[T <: Event] extends Actor with ActorLogging {
 
   def applyEvent: PartialFunction[T, Unit]
 
-  def processCommand: PartialFunction[Any, T]
+  def processCommand: PartialFunction[Any, List[T]]
 
   val source: MongoSource[T]
 
   def receive: Receive = {
     case any: Any ⇒
       val receipt = try {
-        val event = processCommand.apply(any)
-        source.save(event)
-        applyEvent(event)
+        val events = processCommand.apply(any)
+        events.foreach(source.save)
+        events.foreach(applyEvent)
         Receipt(success = true, updated = entityId, message = "OK")
       } catch {
         case err: Exception ⇒ Receipt.error(err)
