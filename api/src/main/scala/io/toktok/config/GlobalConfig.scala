@@ -1,4 +1,4 @@
-package config
+package io.toktok.config
 
 import java.util.concurrent.TimeUnit
 
@@ -15,6 +15,8 @@ object GlobalConfig {
   val mongoHost = config.getString("toktok.source.host")
 
   val mongoDb = config.getString("toktok.source.db")
+
+  def collectionsHost(collection: String) = config.getString(s"toktok.source.collections.$collection.host")
 
   val PORT = config.getInt("toktok.port")
 

@@ -13,7 +13,7 @@
     <logger name="spray.can.client.HttpHostConnectionSlot" level="DEBUG" />
     <logger name="akka.io.TcpOutgoingConnection" level="DEBUG" />
     <logger name="spray.can.HttpManager" level="DEBUG" />
-    <logger name="everreach.api.RoutedHttpServiceActor" level="DEBUG" />
+    <logger name="everreach.io.toktok.api.RoutedHttpServiceActor" level="DEBUG" />
     <logger name="akka.io.TcpIncomingConnection" level="DEBUG" />
     <logger name="spray.can.server.HttpListener" level="DEBUG" />
     <logger name="akka.io.SelectionHandler" level="DEBUG" />

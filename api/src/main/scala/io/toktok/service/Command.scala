@@ -1,4 +1,4 @@
-package service
+package io.toktok.service
 
 import com.novus.salat.annotations.raw.Salat
 import model.SID

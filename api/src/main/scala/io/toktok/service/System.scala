@@ -1,4 +1,4 @@
-package service
+package io.toktok.service
 
 import akka.actor.ActorSystem
 

@@ -1,13 +1,13 @@
-package api.endpoints
+package io.toktok.api.endpoints
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.novus.salat.global.ctx
 import com.novus.salat.grater
-import config.GlobalConfig
-import service.actors.ChangeUserPasswordCommand
+import io.toktok.config.GlobalConfig
+import io.toktok.service.actors.ChangeUserPasswordCommand
+import io.toktok.utils.Implicits._
 import spray.routing.Route
-import utils.Implicits._
 
 /**
  * Created by ernest on 4/4/15.

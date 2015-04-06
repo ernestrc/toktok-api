@@ -1,24 +1,22 @@
-package api.endpoints
+package io.toktok.api.endpoints
 
 import akka.actor.{ActorSelection, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.novus.salat.grater
 import com.novus.salat.global._
-import config.GlobalConfig
-import model.Receipt
-import service.actors.{ForgotPasswordCommand, ChangeUserPasswordCommand, CreateUserCommand}
+import com.novus.salat.grater
+import io.toktok.config.GlobalConfig
+import io.toktok.model.Receipt
+import io.toktok.service.actors.{ChangeUserPasswordCommand, CreateUserCommand, ForgotPasswordCommand}
 import spray.routing.Route
-
-import scala.concurrent.Future
 
 //TODO authentication and authorization
 //TODO use atom's user guid to help authenticate
 //TODO hash passwords
 class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
+  import io.toktok.utils.Implicits._
   import system.dispatcher
-  import utils.Implicits._
 
   val entityPath = "users"
   val log = system.log

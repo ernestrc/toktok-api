@@ -1,7 +1,7 @@
-package api
+package io.toktok.api
 
 import akka.actor.{Actor, ActorRefFactory}
-import api.endpoints.Endpoint
+import io.toktok.api.endpoints.Endpoint
 import spray.routing.{Route, HttpService}
 
 class HttpHandler(endpoints: List[Endpoint]) extends HttpService with Actor with DefaultHttpConfig {

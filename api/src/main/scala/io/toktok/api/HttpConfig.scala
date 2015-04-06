@@ -1,12 +1,15 @@
-package api
+package io.toktok.api
 
 import akka.actor.{ActorRefFactory, Actor}
+import akka.event.Logging
+import io.toktok.model.Receipt
 import spray.http.StatusCode
 import spray.http.StatusCodes._
 import spray.routing.{RequestContext, RoutingSettings, RejectionHandler, ExceptionHandler}
 import spray.util.LoggingContext
+import io.toktok.utils.Implicits._
 
-trait HttpConfig{
+trait HttpConfig {
 
   val exceptionHandler: ExceptionHandler
 
@@ -20,12 +23,17 @@ trait HttpConfig{
 
 trait DefaultHttpConfig extends HttpConfig {
 
+  implicit val receiptGrater = graterMarshallerConverter(Receipt.receiptGrater)
+
   implicit def actorRefFactory: ActorRefFactory
 
-  private def loggedFailureResponse(ctx: RequestContext,thrown: Throwable,
+  private def loggedFailureResponse(ctx: RequestContext, thrown: Throwable,
                                     message: String = "Something Exploded!",
-                                    error: StatusCode = InternalServerError): Unit = {
-    ctx.complete((error, s"$message CAUSE $thrown"))
+                                    error: StatusCode = InternalServerError,
+                                    logLevel: Logging.LogLevel = Logging.ErrorLevel): Unit = {
+    val msg = s"$message CAUSE $thrown"
+    loggingContext.log(logLevel, msg)
+    ctx.complete((error, Receipt.error(thrown, msg)))
   }
 
   val exceptionHandler: ExceptionHandler = ExceptionHandler {
@@ -33,12 +41,15 @@ trait DefaultHttpConfig extends HttpConfig {
     case e: IllegalArgumentException => ctx =>
       loggedFailureResponse(ctx, e,
         message = "Illegan argument Exception thrown: " + e.getMessage,
-        error = NotAcceptable)
+        error = NotAcceptable,
+        Logging.WarningLevel)
 
     case e: NoSuchElementException => ctx =>
       loggedFailureResponse(ctx, e,
         message = "Not Found",
-        error = NotFound)
+        error = NotFound,
+        Logging.InfoLevel
+      )
 
     case t: Throwable => ctx =>
       loggedFailureResponse(ctx, t)

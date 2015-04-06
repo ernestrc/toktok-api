@@ -1,12 +1,8 @@
-package api.endpoints
+package io.toktok.api.endpoints
 
-import akka.actor.{ActorSystem, ActorSelection}
+import akka.actor.{ActorSelection, ActorSystem}
 import akka.util.Timeout
-import api.AuthenticationDirectives
-import com.novus.salat.Context
-import config.GlobalConfig
-import model.SID
-import org.bson.types.ObjectId
+import io.toktok.api.AuthenticationDirectives
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 

@@ -1,26 +1,26 @@
-package service.actors
+package io.toktok.service.actors
 
 import java.util.NoSuchElementException
 
-import akka.actor.SupervisorStrategy.{Stop, Restart}
+import akka.actor.SupervisorStrategy.{Restart, Stop}
 import akka.actor._
 import akka.event.LoggingAdapter
-import akka.pattern.pipe
+import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import com.mongodb.casbah.MongoClient
 import com.novus.salat._
 import com.novus.salat.annotations._
 import com.novus.salat.global._
-import config.GlobalConfig
-import dal.MongoSource
-import model.Exceptions.UserExistsException
-import model.{SID, Receipt}
+import io.toktok.config.GlobalConfig
+import io.toktok.dal.MongoSource
+import io.toktok.model.Exceptions.{WrongPasswordException, UserExistsException}
+import io.toktok.model.{EventSubscription, AkkaEventSubscription, Receipt}
+import io.toktok.service.{Command, Event}
+import io.toktok.utils.Implicits._
+import model.SID
 import org.bson.types.ObjectId
-import service.{Command, Event}
 import unstable.macros.Macros._
 import unstable.macros.TypeHint
-import utils.Implicits._
-import akka.pattern.ask
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -51,9 +51,11 @@ object UserActor {
  */
 class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) extends EventSourcedActor[UserEvent] {
 
+  implicit val system: ActorSystem = context.system
+
   override def preStart(): Unit = {
     log.info(s"Booting up UserActor - ${self.path.name}...")
-    val count = source.findAllByEntityId(entityId).foldLeft(0) { (cc, ev) ⇒ applyEvent(ev); cc + 1}
+    val count = source.findAllByEntityId(entityId).foldLeft(0) { (cc, ev) ⇒ eventProcessor(ev); cc + 1}
     log.info(s"Finished booting up UserActor - ${self.path.name}. Applied $count events")
   }
 
@@ -62,10 +64,16 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
   var password: String = anchor.passwordHash
   var email: String = anchor.email
   var activated: Boolean = true //TODO implement emailer
-//  var blacklist: Boolean = false
+
+  val subscriptions: List[EventSubscription] = AkkaEventSubscription[PasswordChangedEvent,
+    UserEvent](self, grater[PasswordChangedEvent], entityId) :: Nil
 
 
-  override def applyEvent: PartialFunction[UserEvent, Unit] = {
+  override def subscriptionEventProcessor: PartialFunction[Event, List[UserEvent]] = {
+    case _: PasswordChangedEvent ⇒ log.debug("IT WORKS!"); List.empty
+  }
+
+  override def eventProcessor: PartialFunction[UserEvent, Unit] = {
     case _: UserActivatedEvent ⇒
       log.info(s"User $username has been activated")
       activated = true
@@ -76,7 +84,8 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
       log.debug(s"New password for user $username should be on its way")
   }
 
-  override def processCommand = PartialFunction.apply[Any, List[UserEvent]]{
+  override def commandProcessor: PartialFunction[Command, List[UserEvent]] ={
+    case ActivateUserCommand(id) ⇒ UserActivatedEvent(id) :: Nil
     case ForgotPasswordCommand(user, mail) ⇒ val em = email; mail match {
       case `em` ⇒ val newPass = ObjectId.get().toString
         SendNewPasswordEvent(entityId, newPass) :: PasswordChangedEvent(entityId, newPass) :: Nil
@@ -87,7 +96,7 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
     }
     case ChangeUserPasswordCommand(uuid, newPassHash, oldPassHash) ⇒ val xword = password; oldPassHash match {
       case `xword` ⇒ PasswordChangedEvent(uuid, newPassHash) :: Nil
-      case anyElse ⇒ throw new Exception("Wrong password!")
+      case anyElse ⇒ throw new WrongPasswordException
     }
   }
 }
@@ -153,19 +162,18 @@ class UsersGuardian extends Actor with ActorLogging {
       log.error(err, msg)
       Receipt.error(err, msg)
   }.andThen { //auto activate white-listed
-    case Success(rec) ⇒
+    case Success(rec) if rec.success ⇒
       val uuid = rec.updated
       if(GlobalConfig.WHITELIST_EMAIL.exists(email.matches)) {
         val selection = context.system.actorSelection(context.system / self.path.name / uuid)
         selection.resolveOne().map{ c ⇒
           log.info(s"User's \'$username\' email \'$email\' is whitelisted. Activating user now!")
           c.ask(ActivateUserCommand(uuid))
-        }.andThen {
+        }.andThen{
           case Failure(err) ⇒ log.error("Could not activate whitelisted user!")
         }
       }
       else log.info(s"User's \'$username\' email \'$email\' not in whitelist")
-//    case Failure()
   }
 
   def forwardToChildOrCreateNew(cmd: Command, requester: ActorRef): Future[Unit] = Future {

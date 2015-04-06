@@ -1,4 +1,4 @@
-package api
+package io.toktok.api
 
 import spray.routing.AuthenticationFailedRejection
 import spray.routing.AuthenticationFailedRejection.CredentialsRejected

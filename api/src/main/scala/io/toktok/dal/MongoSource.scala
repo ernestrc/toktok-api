@@ -1,13 +1,13 @@
-package dal
+package io.toktok.dal
 
 import akka.event.LoggingAdapter
 import com.mongodb.casbah.Imports
 import com.mongodb.casbah.Imports._
 import com.novus.salat._
+import io.toktok.service.Event
+import io.toktok.utils.Implicits._
 import model.SID
-import service.Event
 import unstable.macros.TypeHint
-import utils.Implicits._
 
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -25,15 +25,14 @@ class MongoSource[T <: Event : ClassTag](db: MongoDB,
       .asInstanceOf[E]
   }
 
-  val collectionT = db(implicitly[ClassTag[T]].runtimeClass.getSimpleName)
+  val runtimeClazz = implicitly[ClassTag[T]].runtimeClass.getSimpleName
+  val collectionT = db(runtimeClazz)
 
   def findAllByEntityId(id: SID): List[_ <: T] = {
     collectionT.find(MongoDBObject("entityId" → id)).toList.map { mongoObject ⇒
       serializers(mongoObject.as[String]("_typeHint").toHint).asObject(mongoObject)
     }
   }
-
-  def subscribe[E <: T]: Try[Int] = ???
 
   def save[E <: T](event: E): Try[SID] = Try {
     val obj = serializers(event.typeHint).asInstanceOf[Grater[E]].asDBObject(event)
@@ -43,15 +42,16 @@ class MongoSource[T <: Event : ClassTag](db: MongoDB,
 
   def findOneByObjectId[E <: T](id: ObjectId)(implicit tag: ClassTag[E]): Option[E] = {
     val clazz = tag.runtimeClass.getCanonicalName
-    collectionT.findOne(MongoDBObject(
-      "_typeHint" → clazz, "_id" → id
-    )).map(fromHintTo[E])
+    val query = MongoDBObject("_typeHint" → clazz, "_id" → id)
+    collectionT.findOne(query).orElse(collectionT.findOne(query)).map(fromHintTo[E])
   }
 
   def findAllEventsOfType[E <: T](implicit tag: ClassTag[E]): List[E] = {
     val clazz = tag.runtimeClass.getCanonicalName
     log.debug(s"Fetching all events of type $clazz")
-    collectionT.find("_typeHint" $eq clazz).toList.map(fromHintTo[E]) Ω { list ⇒
+    val query = "_typeHint" $eq clazz
+
+    collectionT.find(query).toList.map(fromHintTo[E]) Ω { list ⇒
       s"Found events: $list"
     }
   }

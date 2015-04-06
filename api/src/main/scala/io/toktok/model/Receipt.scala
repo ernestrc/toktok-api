@@ -1,7 +1,8 @@
-package model
+package io.toktok.model
 
 import com.novus.salat.global._
 import com.novus.salat.{Grater, _}
+import model.SID
 
 /**
  * Basic command-side reporting class.

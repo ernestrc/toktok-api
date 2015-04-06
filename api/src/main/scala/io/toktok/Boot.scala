@@ -1,13 +1,18 @@
+package io.toktok
+
 import akka.actor.Props
 import akka.event.LoggingAdapter
 import akka.io.IO
-import api.HttpHandler
-import api.endpoints.{InternalEndpoint, UserEndpoint}
-import config.GlobalConfig
-import service.BootedSystem
-import service.actors.{UserActor, UsersGuardian}
+import io.toktok.api.HttpHandler
+import io.toktok.api.endpoints.{InternalEndpoint, UserEndpoint}
+import io.toktok.config.GlobalConfig
+import io.toktok.service.BootedSystem
+import io.toktok.service.actors.UsersGuardian
 import spray.can.Http
 
+/**
+ * Created by ernest on 4/5/15.
+ */
 object Boot extends App with BootedSystem {
 
   implicit val log: LoggingAdapter = system.log

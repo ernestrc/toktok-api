@@ -1,4 +1,4 @@
-package utils
+package io.toktok.utils
 
 import akka.event.LoggingAdapter
 import com.novus.salat.Grater
@@ -15,7 +15,7 @@ object Implicits {
     def toSid:SID = _id.toString
   }
 
-  implicit class logAndReturn[T](any: T)(implicit log: LoggingAdapter){
+  implicit class pimpedAny[T](any: T)(implicit log: LoggingAdapter){
     def Ω(message:T ⇒ String) = {
       log.debug(message(any))
       any
