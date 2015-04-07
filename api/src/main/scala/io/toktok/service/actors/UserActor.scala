@@ -14,7 +14,7 @@ import com.novus.salat.global._
 import io.toktok.config.GlobalConfig
 import io.toktok.dal.MongoSource
 import io.toktok.model.Exceptions.{WrongPasswordException, UserExistsException}
-import io.toktok.model.{EventSubscription, AkkaEventSubscription, Receipt}
+import io.toktok.model.{Subscription, AkkaSubscription, Receipt}
 import io.toktok.service.{Command, Event}
 import io.toktok.utils.Implicits._
 import model.SID
@@ -53,6 +53,11 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
 
   implicit val system: ActorSystem = context.system
 
+
+  override def postStop(): Unit = {
+    subscriptions.foreach(_.unsubscribe())
+  }
+
   override def preStart(): Unit = {
     log.info(s"Booting up UserActor - ${self.path.name}...")
     val count = source.findAllByEntityId(entityId).foldLeft(0) { (cc, ev) ⇒ eventProcessor(ev); cc + 1}
@@ -65,15 +70,15 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
   var email: String = anchor.email
   var activated: Boolean = true //TODO implement emailer
 
-  val subscriptions: List[EventSubscription] = AkkaEventSubscription[PasswordChangedEvent,
-    UserEvent](self, grater[PasswordChangedEvent], entityId) :: Nil
+  val subscriptions: List[Subscription] = List.empty
+//    List(
+//    AkkaSubscription[PasswordChangedEvent, UserEvent](
+//      grater[PasswordChangedEvent], entityId)(eventProcessor.apply),
+//    AkkaSubscription[PasswordChangedEvent, UserEvent](
+//        grater[PasswordChangedEvent], entityId)(eventProcessor.apply))
 
 
-  override def subscriptionEventProcessor: PartialFunction[Event, List[UserEvent]] = {
-    case _: PasswordChangedEvent ⇒ log.debug("IT WORKS!"); List.empty
-  }
-
-  override def eventProcessor: PartialFunction[UserEvent, Unit] = {
+  override def eventProcessor: PartialFunction[Event, Unit] = {
     case _: UserActivatedEvent ⇒
       log.info(s"User $username has been activated")
       activated = true

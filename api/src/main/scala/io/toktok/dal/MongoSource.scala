@@ -35,7 +35,7 @@ class MongoSource[T <: Event : ClassTag](db: MongoDB,
   }
 
   def save[E <: T](event: E): Try[SID] = Try {
-    val obj = serializers(event.typeHint).asInstanceOf[Grater[E]].asDBObject(event)
+    val obj = serializers(event._typeHint).asInstanceOf[Grater[E]].asDBObject(event)
     collectionT.insert(obj)
     obj._id.get.toSid
   }
