@@ -13,22 +13,22 @@ import com.novus.salat.annotations._
 import com.novus.salat.global._
 import io.toktok.command.users.ServiceConfig
 import io.toktok.dal.MongoSource
-import io.toktok.model.Exceptions.{WrongPasswordException, UserExistsException}
+import io.toktok.model.Exceptions.{UserExistsException, WrongPasswordException}
 import io.toktok.model._
 import io.toktok.service.EventSourcedActor
 import io.toktok.utils.Implicits._
-import model.SID
 import org.bson.types.ObjectId
 import unstable.macros.Macros._
 import unstable.macros.TypeHint
+import org.mindrot.jbcrypt.BCrypt
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 @Salat
 sealed trait UserCommand extends Command
-case class CreateUserCommand(username: String, passwordHash: String, email: String) extends UserCommand
-case class ChangeUserPasswordCommand(override val entityId: SID, newPassHash: String, oldPassHash: String) extends UserCommand
+case class CreateUserCommand(username: String, password: String, email: String) extends UserCommand
+case class ChangeUserPasswordCommand(override val entityId: SID, newPass: String, oldPass: String) extends UserCommand
 case class ForgotPasswordCommand(username: String, email: String) extends UserCommand
 case class ActivateUserCommand(override val entityId: SID) extends UserCommand
 
@@ -53,32 +53,15 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
 
   implicit val system: ActorSystem = context.system
 
-
-  override def postStop(): Unit = {
-    subscriptions.foreach(_.unsubscribe())
-  }
-
-  override def preStart(): Unit = {
-    log.info(s"Booting up UserActor - ${self.path.name}...")
-    val count = source.findAllByEntityId(entityId).foldLeft(0) { (cc, ev) ⇒ eventProcessor(ev); cc + 1}
-    log.info(s"Finished booting up UserActor - ${self.path.name}. Applied $count events")
-  }
-
-  val entityId: SID = anchor.uuid.get.toSid
+  implicit val entityId: Option[SID] = anchor.uuid.map(_.toSid)
   val username: String = anchor.username
   var password: String = anchor.passwordHash
   var email: String = anchor.email
   var activated: Boolean = true //TODO implement emailer
 
   val subscriptions: List[Subscription] = List.empty
-//    List(
-//    AkkaSubscription[PasswordChangedEvent, UserEvent](
-//      grater[PasswordChangedEvent], entityId)(eventProcessor.apply),
-//    AkkaSubscription[PasswordChangedEvent, UserEvent](
-//        grater[PasswordChangedEvent], entityId)(eventProcessor.apply))
 
-
-  override def eventProcessor: PartialFunction[Event, Unit] = {
+  override val eventProcessor: PartialFunction[Event, Unit] = {
     case _: UserActivatedEvent ⇒
       log.info(s"User $username has been activated")
       activated = true
@@ -86,23 +69,24 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
       log.info(s"User $username changed password to $pass")
       password = pass
     case SendNewPasswordEvent(uuid, pass) ⇒
-      log.debug(s"New password for user $username should be on its way")
+      log.info(s"New password for user $username should be on its way")
   }
 
-  override def commandProcessor: PartialFunction[Command, List[UserEvent]] ={
+  override val commandProcessor: PartialFunction[Command, List[UserEvent]] = {
     case ActivateUserCommand(id) ⇒ UserActivatedEvent(id) :: Nil
-    case ForgotPasswordCommand(user, mail) ⇒ val em = email; mail match {
-      case `em` ⇒ val newPass = ObjectId.get().toString
-        SendNewPasswordEvent(entityId, newPass) :: PasswordChangedEvent(entityId, newPass) :: Nil
-      case anyElse ⇒
-        val msg = "Wrong email and username combination!"
-        log.debug(msg + s" $mail did not match $em")
-        throw new Exception(msg)
-    }
-    case ChangeUserPasswordCommand(uuid, newPassHash, oldPassHash) ⇒ val xword = password; oldPassHash match {
-      case `xword` ⇒ PasswordChangedEvent(uuid, newPassHash) :: Nil
-      case anyElse ⇒ throw new WrongPasswordException
-    }
+    case ForgotPasswordCommand(user, mail) ⇒ val em = email;
+      mail match {
+        case `em` ⇒ val newPass = ObjectId.get().toString
+          SendNewPasswordEvent(entityId.get, newPass) :: PasswordChangedEvent(entityId.get, newPass) :: Nil
+        case anyElse ⇒
+          val msg = "Wrong email and username combination!"
+          log.debug(msg + s" $mail did not match $em")
+          throw new Exception(msg)
+      }
+    case ChangeUserPasswordCommand(uuid, newPass, oldPass) ⇒
+      if (BCrypt.checkpw(oldPass, password)) {
+        PasswordChangedEvent(uuid, BCrypt.hashpw(newPass, BCrypt.gensalt())) :: Nil
+      } else throw new WrongPasswordException
   }
 }
 
@@ -147,7 +131,8 @@ class UsersCommandSideActor extends Actor with ActorLogging {
     if (users.exists(_._2 == username))
       throw UserExistsException(username)
     else {
-      val anchor = UserCreatedAnchor(None, username, pass, email)
+      val passHash = BCrypt.hashpw(pass, BCrypt.gensalt())
+      val anchor = UserCreatedAnchor(None, username, passHash, email)
       val id = Some(source.save(anchor).get.toObjectId)
       anchor.copy(uuid = id)
     }
@@ -166,15 +151,16 @@ class UsersCommandSideActor extends Actor with ActorLogging {
       val msg = s"Could not create user $username"
       log.error(err, msg)
       Receipt.error(err, msg)
-  }.andThen { //auto activate white-listed
+  }.andThen {
+    //auto activate white-listed
     case Success(rec) if rec.success ⇒
       val uuid = rec.updated
-      if(ServiceConfig.WHITELIST_EMAIL.exists(email.matches)) {
+      if (ServiceConfig.WHITELIST_EMAIL.exists(email.matches)) {
         val selection = context.system.actorSelection(context.system / self.path.name / uuid)
-        selection.resolveOne().map{ c ⇒
+        selection.resolveOne().map { c ⇒
           log.info(s"User's \'$username\' email \'$email\' is whitelisted. Activating user now!")
           c.ask(ActivateUserCommand(uuid))
-        }.andThen{
+        }.andThen {
           case Failure(err) ⇒ log.error("Could not activate whitelisted user!")
         }
       }
@@ -203,7 +189,7 @@ class UsersCommandSideActor extends Actor with ActorLogging {
   }
 
   override def receive: Receive = {
-    case cmd : ForgotPasswordCommand ⇒ forgotPasswordCommand(cmd) pipeTo sender()
+    case cmd: ForgotPasswordCommand ⇒ forgotPasswordCommand(cmd) pipeTo sender()
     case CreateUserCommand(username, pass, email) ⇒
       createNewUserCommand(username, pass, email) pipeTo sender()
     case cmd: UserCommand ⇒ forwardToChildOrCreateNew(cmd, sender())

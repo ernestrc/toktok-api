@@ -1,7 +1,4 @@
-name := "users_command"
-
-libraryDependencies ++= List(
-  "com.tokbox"               % "opentok-server-sdk"         % "2.2.2")
+name := "gateway"
 
 javaOptions in Revolver.reStart ++= Seq (
   "-Xmx2g"//,
