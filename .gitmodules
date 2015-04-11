@@ -1,3 +1,6 @@
 [submodule "macros"]
 	path = macros
 	url = git@github.com:ernestrc/macros.git
+[submodule "krakken"]
+	path = krakken
+	url = git@github.com:ernestrc/Krakken.git

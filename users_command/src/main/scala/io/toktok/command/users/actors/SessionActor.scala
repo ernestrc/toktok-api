@@ -1,26 +1,23 @@
 package io.toktok.command.users.actors
 
-import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.mongodb.casbah.MongoClient
-import com.novus.salat.Grater
 import com.novus.salat.annotations._
-import io.toktok.command.users.ServiceConfig
-import io.toktok.config.GlobalConfig
-import io.toktok.dal.MongoSource
-import io.toktok.model._
-import io.toktok.service.EventSourcedActor
-import unstable.macros.TypeHint
-import com.novus.salat._
 import com.novus.salat.global.ctx
-import unstable.macros.Macros._
-import com.opentok.{MediaMode, SessionProperties, OpenTok}
+import com.novus.salat.{Grater, _}
+import com.opentok.{MediaMode, OpenTok, SessionProperties}
+import io.toktok.command.users.ServiceConfig
+import krakken.config.GlobalConfig
+import krakken.dal.MongoSource
+import krakken.macros.Macros._
+import krakken.model._
+import krakken.service.EventSourcedActor
 
 
 @Salat
 sealed trait SessionEvent extends Event
-case class SessionCreatedEvent(uuid: SID, sessionID: SID) extends SessionEvent
+case class SessionCreatedAnchor(uuid: SID, sessionID: SID) extends SessionEvent
 
 @Salat
 sealed trait SessionCommand extends Command
@@ -48,7 +45,7 @@ class SessionActor extends EventSourcedActor[SessionEvent] {
 
 
   override val eventProcessor: PartialFunction[Event, Unit] = {
-    case cmd @ SessionCreatedEvent(uuid, sid) ⇒
+    case cmd @ SessionCreatedAnchor(uuid, sid) ⇒
       log.info(s"Created Opentok session for user $uuid")
   }
 
@@ -56,7 +53,7 @@ class SessionActor extends EventSourcedActor[SessionEvent] {
     case GenerateSessionCommand(id) ⇒
       val ses = opentok.createSession(
         new SessionProperties.Builder().mediaMode(MediaMode.ROUTED).build())
-      SessionCreatedEvent(id, ses.getSessionId) :: Nil
+      SessionCreatedAnchor(id, ses.getSessionId) :: Nil
   }
 
   val subscriptions: List[Subscription] =

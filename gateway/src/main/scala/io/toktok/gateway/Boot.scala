@@ -1,8 +1,8 @@
 package io.toktok.gateway
 
-import io.toktok.gateway.endpoints.{UserEndpoint, InternalEndpoint}
-import io.toktok.model.{MicroService, EndpointProps}
-import io.toktok.service.BootedSystem
+import io.toktok.gateway.endpoints.{InternalEndpoint, UserEndpoint}
+import krakken.MicroService
+import krakken.model.EndpointProps
 
 object Boot extends App {
 

@@ -11,15 +11,14 @@ import com.mongodb.casbah.MongoClient
 import com.novus.salat._
 import com.novus.salat.annotations._
 import com.novus.salat.global._
+import io.toktok.command.users.Exceptions.{UserExistsException, WrongPasswordException}
 import io.toktok.command.users.ServiceConfig
-import io.toktok.dal.MongoSource
-import io.toktok.model.Exceptions.{UserExistsException, WrongPasswordException}
-import io.toktok.model._
-import io.toktok.service.EventSourcedActor
-import io.toktok.utils.Implicits._
+import krakken.dal.MongoSource
+import krakken.macros.Macros._
+import krakken.model._
+import krakken.service.EventSourcedActor
+import krakken.utils.Implicits._
 import org.bson.types.ObjectId
-import unstable.macros.Macros._
-import unstable.macros.TypeHint
 import org.mindrot.jbcrypt.BCrypt
 
 import scala.concurrent.Future

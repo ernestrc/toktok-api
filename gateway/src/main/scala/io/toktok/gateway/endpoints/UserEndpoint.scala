@@ -5,11 +5,11 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.novus.salat.global._
 import com.novus.salat.grater
-import io.toktok.command.users.actors.{ForgotPasswordCommand, ChangeUserPasswordCommand, CreateUserCommand, UsersCommandSideActor}
+import io.toktok.command.users.actors.{ChangeUserPasswordCommand, CreateUserCommand, ForgotPasswordCommand, UsersCommandSideActor}
 import io.toktok.gateway.ApiConfig
-import io.toktok.http.Endpoint
-import io.toktok.model.Receipt
-import io.toktok.utils.Implicits._
+import krakken.http.Endpoint
+import krakken.model.Receipt
+import krakken.utils.Implicits._
 import spray.routing.Route
 
 //TODO authentication and authorization

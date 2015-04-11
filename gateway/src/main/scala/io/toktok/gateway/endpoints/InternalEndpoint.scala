@@ -7,8 +7,8 @@ import com.novus.salat.global.ctx
 import com.novus.salat.grater
 import io.toktok.command.users.actors.ChangeUserPasswordCommand
 import io.toktok.gateway.ApiConfig
-import io.toktok.http.Endpoint
-import io.toktok.utils.Implicits._
+import krakken.http.Endpoint
+import krakken.utils.Implicits._
 import spray.routing.Route
 
 /**
