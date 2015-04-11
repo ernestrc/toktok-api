@@ -1,4 +1,4 @@
-name := "users_view"
+name := "users_query"
 
 javaOptions in Revolver.reStart ++= Seq (
   "-Xmx2g"//,

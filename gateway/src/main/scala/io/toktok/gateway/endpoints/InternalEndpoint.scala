@@ -16,10 +16,12 @@ import spray.routing.Route
  */
 class InternalEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
+  override val remoteQueryLoc: String = ""
+  override val remoteQueryGuardianPath: String = ""
   override val log: LoggingAdapter = system.log
-  override val guardianActorSelection: ActorSelection = system.actorSelection("")
-  override val remoteGuardianPath: String = ""
-  override val remoteSystemLoc: String = ""
+  override val commandGuardianActorSelection: ActorSelection = system.actorSelection("")
+  override val remoteCommandGuardianPath: String = ""
+  override val remoteCommandLoc: String = ""
   implicit val timeout: Timeout = ApiConfig.ENDPOINT_TIMEOUT
   val fallbackTimeout: Timeout = ApiConfig.ENDPOINT_FALLBACK_TIMEOUT
 

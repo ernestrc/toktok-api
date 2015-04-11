@@ -23,6 +23,7 @@ object ApiConfig {
   val ENDPOINT_FALLBACK_TIMEOUT: FiniteDuration =
     FiniteDuration(config.getDuration("toktok.actors.endpoint-fallback",
       TimeUnit.SECONDS), TimeUnit.SECONDS)
-
+  
   val USERS_CMD_LOCATION:String = config.getString("toktok.services.command.users")
+  val USERS_QUERY_LOCATION:String = config.getString("toktok.services.query.users")
 }
