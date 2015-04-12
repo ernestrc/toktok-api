@@ -5,8 +5,8 @@ import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.novus.salat.global.ctx
 import com.novus.salat.grater
-import io.toktok.command.users.actors.ChangeUserPasswordCommand
 import io.toktok.gateway.ApiConfig
+import io.toktok.model.ChangeUserPasswordCommand
 import krakken.http.Endpoint
 import krakken.utils.Implicits._
 import spray.routing.Route

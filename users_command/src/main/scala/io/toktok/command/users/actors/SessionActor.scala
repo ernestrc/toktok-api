@@ -1,6 +1,7 @@
 package io.toktok.command.users.actors
 
 import com.opentok.OpenTok
+import io.toktok.model.{GenerateTokenCommand, SessionCreatedAnchor, SessionEvent, TokenCreatedEvent}
 import krakken.dal.MongoSource
 import krakken.model._
 import krakken.service.EventSourcedActor

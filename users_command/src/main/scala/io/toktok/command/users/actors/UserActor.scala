@@ -1,36 +1,14 @@
 package io.toktok.command.users.actors
 
 import akka.actor._
-import com.novus.salat._
-import com.novus.salat.annotations._
-import com.novus.salat.global._
 import io.toktok.command.users.Exceptions.WrongPasswordException
+import io.toktok.model._
 import krakken.dal.MongoSource
-import krakken.macros.Macros._
 import krakken.model._
 import krakken.service.EventSourcedActor
 import krakken.utils.Implicits._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
-
-@Salat
-sealed trait UserCommand extends Command
-case class CreateUserCommand(username: String, password: String, email: String) extends UserCommand
-case class ChangeUserPasswordCommand(override val entityId: SID, newPass: String, oldPass: String) extends UserCommand
-case class ForgotPasswordCommand(username: String, email: String) extends UserCommand
-case class ActivateUserCommand(override val entityId: SID) extends UserCommand
-
-
-@Salat
-sealed trait UserEvent extends Event
-case class UserCreatedAnchor(@Key("_id") uuid: Option[ObjectId], username: String, passwordHash: String, email: String) extends UserEvent with Event
-case class PasswordChangedEvent(entityId: SID, newPassword: String) extends UserEvent with Event
-case class UserActivatedEvent(entityId: SID) extends UserEvent with Event
-case class SendNewPasswordEvent(entityId: SID, newPassword: SID) extends UserEvent with Event
-
-object UserActor {
-  val eventSerializers: PartialFunction[TypeHint, Grater[_ <: UserEvent]] = grateSealed[UserEvent]
-}
 
 /**
  *

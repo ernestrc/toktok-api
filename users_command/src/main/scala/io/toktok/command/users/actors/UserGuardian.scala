@@ -11,6 +11,7 @@ import com.mongodb.casbah.MongoClient
 import com.novus.salat.Grater
 import io.toktok.command.users.Exceptions.UserExistsException
 import io.toktok.command.users.ServiceConfig
+import io.toktok.model._
 import krakken.dal.MongoSource
 import krakken.model.{Command, Receipt, TypeHint}
 import krakken.utils.Implicits._
@@ -48,7 +49,7 @@ class UserGuardian extends Actor with ActorLogging {
   implicit val logger: LoggingAdapter = log
   val client = MongoClient(ServiceConfig.mongoHost)
   val db = client(ServiceConfig.mongoDb)
-  val serializers: PartialFunction[TypeHint, Grater[_ <: UserEvent]] = UserActor.eventSerializers
+  val serializers: PartialFunction[TypeHint, Grater[_ <: UserEvent]] = userEventSerializers
   val source = new MongoSource[UserEvent](db, serializers)
 
   def addUser(anchor: UserCreatedAnchor): Unit = {

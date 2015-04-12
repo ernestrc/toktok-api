@@ -17,6 +17,11 @@ object ServiceConfig {
 
   def collectionsHost(collection: String) = config.getString(s"toktok.source.collections.$collection.host")
 
+  val RESET_RETRIES = config.getInt("toktok.actors.supervisor.retries")
+
+  val RESET_WITHIN = FiniteDuration(config.getDuration("toktok.actors.supervisor.within",
+    TimeUnit.SECONDS), TimeUnit.SECONDS)
+
   val OPENTOK_KEY = config.getInt("toktok.opentok.apikey")
 
   val OPENTOK_SECRET = config.getString("toktok.opentok.secret")

@@ -3,23 +3,15 @@ package io.toktok.gateway.endpoints
 import akka.actor.{ActorSelection, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import io.toktok.command.users.actors.{GenerateTokenCommand, SessionGuardian}
+import com.novus.salat._
+import com.novus.salat.global.ctx
 import io.toktok.gateway.ApiConfig
-import io.toktok.query.users.actors.{GetSessionToken, GeneratedToken, SessionActor}
-import io.toktok.query.users.GetSessionToken
+import io.toktok.model.{GenerateTokenCommand, GeneratedToken, GetSessionToken}
 import krakken.http.Endpoint
 import krakken.model.Receipt
-import com.novus.salat.global.ctx
-import com.novus.salat._
-import spray.httpx.marshalling.ToResponseMarshallable
-import spray.routing.Route
 import krakken.utils.Implicits._
+import spray.routing.Route
 
-import scala.concurrent.Future
-
-/**
- * Created by ernest on 4/11/15.
- */
 class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
   import system.dispatcher
@@ -29,9 +21,9 @@ class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
 
   override val remoteQueryLoc: String = ApiConfig.USERS_QUERY_LOCATION
-  override val remoteQueryGuardianPath: String = classOf[SessionActor].getSimpleName
+  override val remoteQueryGuardianPath: String = "SessionActor"
   override val remoteCommandLoc: String = ApiConfig.USERS_CMD_LOCATION
-  override val remoteCommandGuardianPath: String = classOf[SessionGuardian].getSimpleName
+  override val remoteCommandGuardianPath: String = "SessionGuardian"
 
   implicit val tokenGrater = graterMarshallerConverter(grater[GeneratedToken])
 
@@ -42,7 +34,7 @@ class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
           complete {
             val cmd = GenerateTokenCommand(userId)
             entityCommandActor(userId).ask(cmd)
-            .mapTo[Receipt].flatMap {
+              .mapTo[Receipt].flatMap {
               case receipt if receipt.success ⇒
                 queryGuardianActorSelection.ask(GetSessionToken(userId)).mapTo[GeneratedToken]
             }
