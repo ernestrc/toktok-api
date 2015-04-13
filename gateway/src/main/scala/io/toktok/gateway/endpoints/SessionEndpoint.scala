@@ -1,16 +1,18 @@
 package io.toktok.gateway.endpoints
 
 import akka.actor.{ActorSelection, ActorSystem}
+import akka.pattern.ask
 import akka.util.Timeout
-import com.novus.salat._
-import com.novus.salat.global.ctx
 import io.toktok.command.users.actors.SessionCommandGuardian
 import io.toktok.gateway.ApiConfig
+import io.toktok.model.{GenerateTokenCommand, TokenCreatedEvent}
 import krakken.http.Endpoint
-import krakken.utils.Implicits._
+import krakken.model.Receipt
 import spray.routing.Route
 
 class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
+
+  import system.dispatcher
 
   override val fallbackTimeout: Timeout = ApiConfig.ENDPOINT_FALLBACK_TIMEOUT
   override implicit val timeout: Timeout = ApiConfig.ENDPOINT_TIMEOUT
@@ -21,21 +23,16 @@ class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
   override val remoteCommandLoc: String = ApiConfig.USERS_CMD_LOCATION
   override val remoteCommandGuardianPath: String = classOf[SessionCommandGuardian].getSimpleName
 
-//  implicit val tokenGrater = graterMarshallerConverter(grater[GeneratedToken])
+  implicit val receiptTokenMarshaller = receiptMarshaller[TokenCreatedEvent]
 
+//TODO FIX java.lang.RuntimeException: serialize: Unsupported JSON transformation for class='scala.runtime.BoxedUnit', value='()'
   override val route: (ActorSelection) ⇒ Route = { guardian ⇒
     path("token") {
       get {
         parameters('sessionId.as[String]) { sessionId ⇒
           complete {
-            ???
-            //TODO receipt should take polimorphic types
-            //TODO all commands should reply with Receipt[T]
-//            entityCommandActor(sessionId).ask(GenerateTokenCommand(sessionId))
-//              .mapTo[Receipt].flatMap {
-//              case receipt if receipt.success ⇒
-//                queryGuardianActorSelection.ask(GetSessionToken(sessionId)).mapTo[GeneratedToken]
-//            }
+            entityCommandActor(sessionId).ask(GenerateTokenCommand(sessionId))
+              .mapTo[Receipt[TokenCreatedEvent]]
           }
         }
       }

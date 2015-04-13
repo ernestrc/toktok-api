@@ -9,7 +9,7 @@ import io.toktok.command.users.actors.UserCommandGuardian
 import io.toktok.gateway.ApiConfig
 import io.toktok.model.{ChangeUserPasswordCommand, CreateUserCommand, ForgotPasswordCommand}
 import krakken.http.Endpoint
-import krakken.model.Receipt
+import krakken.model.{SID, Receipt}
 import krakken.utils.Implicits._
 import spray.routing.Route
 
@@ -34,7 +34,7 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
         post {
           entity(as[CreateUserCommand](graterCreateUser)) { cmd: CreateUserCommand ⇒
             complete {
-              guardian.ask(cmd).mapTo[Receipt]
+              guardian.ask(cmd).mapTo[Receipt[SID]]
             }
           }
         }
@@ -47,7 +47,7 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
                 case exception: Exception ⇒
                   log.warning(s"Worker of ${cmd.entityId} is not responding!")
                   guardian.ask(cmd)
-              }.mapTo[Receipt]
+              }.mapTo[Receipt[Unit]]
             }
           }
         }
@@ -55,7 +55,7 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
         post {
           entity(as[ForgotPasswordCommand](grater[ForgotPasswordCommand])) { cmd ⇒
             complete {
-              guardian.ask(cmd).mapTo[Receipt]
+              guardian.ask(cmd).mapTo[Receipt[Unit]]
             }
           }
         }

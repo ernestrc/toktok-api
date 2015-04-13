@@ -59,7 +59,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
 
   val users = scala.collection.mutable.Set.empty[(ObjectId, String, String)]
 
-  def createNewUserCommand(username: String, pass: String, email: String): Future[Receipt] = Future {
+  def createNewUserCommand(username: String, pass: String, email: String): Future[Receipt[_]] = Future {
     if (users.exists(_._2 == username)) throw UserExistsException(username)
     else if(users.exists(_._3 == email)) throw UserExistsException(email)
     else {
@@ -73,7 +73,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
     val msg = s"Successfully created user $username"
     context.actorOf(Props(classOf[UserCommandActor], anchor, source), anchor.uuid.get.toString)
     log.info(msg)
-    Receipt(success = true, updated = anchor.uuid.get.toSid, message = msg)
+    Receipt(success = true, updated = anchor.uuid.map(_.toSid), message = msg)
   }.recover {
     case ex@UserExistsException(user) ⇒
       val msg = s"Could not create user $user because it already exists!"
@@ -88,10 +88,10 @@ class UserCommandGuardian extends Actor with ActorLogging {
     case Success(rec) if rec.success ⇒
       val uuid = rec.updated
       if (ServiceConfig.WHITELIST_EMAIL.exists(email.matches)) {
-        val selection = context.system.actorSelection(context.system / self.path.name / uuid)
+        val selection = context.system.actorSelection(context.system / self.path.name / uuid.get)
         selection.resolveOne().map { c ⇒
           log.info(s"User's \'$username\' email \'$email\' is whitelisted. Activating user now!")
-          c.ask(ActivateUserCommand(uuid))
+          c.ask(ActivateUserCommand(uuid.get))
         }.andThen {
           case Failure(err) ⇒ log.error("Could not activate whitelisted user!")
         }
@@ -110,14 +110,14 @@ class UserCommandGuardian extends Actor with ActorLogging {
     case err: Exception ⇒ requester ! Receipt.error(err, "Unable to process command!")
   }
 
-  def forgotPasswordCommand(cmd: ForgotPasswordCommand): Future[Receipt] = Future {
+  def forgotPasswordCommand(cmd: ForgotPasswordCommand): Future[Receipt[_]] = Future {
     val user = users.find(_._2 == cmd.username).get
     context.child(user._1.toString).get
   }.flatMap { userActor ⇒
-    userActor.ask(cmd)(ServiceConfig.ACTOR_TIMEOUT).mapTo[Receipt]
+    userActor.ask(cmd)(ServiceConfig.ACTOR_TIMEOUT).mapTo[Receipt[_]]
   }.recover {
     case ex: NoSuchElementException ⇒
-      Receipt(success = false, message = "Username doesn't correspond to any user")
+      Receipt(success = false, updated = None, message = "Username doesn't correspond to any user")
   }
 
   override def receive: Receive = {

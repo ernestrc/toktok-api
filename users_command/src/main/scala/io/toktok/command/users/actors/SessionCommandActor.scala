@@ -15,8 +15,9 @@ class SessionCommandActor(anchor: SessionCreatedAnchor, val source: MongoSource[
   override val subscriptions: List[Subscription] = List.empty
 
   override val eventProcessor: PartialFunction[Event, Unit] = {
-    case TokenCreatedEvent(ses, tk) ⇒
+    case ev @ TokenCreatedEvent(ses, tk) ⇒
       log.info(s"Token for session $ses was created")
+      ev
   }
 
   override val commandProcessor: PartialFunction[Command, List[SessionEvent]] = {
