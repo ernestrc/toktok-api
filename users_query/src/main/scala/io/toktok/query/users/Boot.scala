@@ -1,13 +1,9 @@
 package io.toktok.query.users
 
-import akka.actor.Props
-import io.toktok.query.users.actors.SessionActor
-import krakken.MicroService
-
 object Boot extends App {
 
-  val actors: List[Props] = Props[SessionActor] :: Nil
+//  val actors: List[Props] = Props[SessionQueryGuardian] :: Nil
 
-  MicroService("users_query", actors)
+//  MicroService("users_query", actors)
 
 }

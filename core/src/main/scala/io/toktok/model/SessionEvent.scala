@@ -6,6 +6,6 @@ import krakken.model.{SID, Event}
 @Salat
 sealed trait SessionEvent extends Event
 
-case class TokenCreatedEvent(userId: SID, sessionId: String, token: String) extends SessionEvent
+case class TokenCreatedEvent(sessionId: String, token: String) extends SessionEvent
 
 case class SessionCreatedAnchor(userId: SID, opentokSessionId: SID) extends SessionEvent

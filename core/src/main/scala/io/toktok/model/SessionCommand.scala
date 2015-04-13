@@ -8,4 +8,4 @@ sealed trait SessionCommand extends Command
 
 case class GenerateSessionCommand(userId: SID) extends SessionCommand
 
-case class GenerateTokenCommand(userId: SID) extends SessionCommand
+case class GenerateTokenCommand(sessionId: SID) extends SessionCommand

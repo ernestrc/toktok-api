@@ -5,7 +5,7 @@ import io.toktok.command.users.Exceptions.WrongPasswordException
 import io.toktok.model._
 import krakken.dal.MongoSource
 import krakken.model._
-import krakken.service.EventSourcedActor
+import krakken.system.EventSourcedCommandActor
 import krakken.utils.Implicits._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
@@ -15,7 +15,7 @@ import org.mindrot.jbcrypt.BCrypt
  * @param anchor
  * @param source
  */
-class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) extends EventSourcedActor[UserEvent] {
+class UserCommandActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) extends EventSourcedCommandActor[UserEvent] {
 
   implicit val system: ActorSystem = context.system
 
@@ -23,7 +23,7 @@ class UserActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) e
   val username: String = anchor.username
   var password: String = anchor.passwordHash
   var email: String = anchor.email
-  var activated: Boolean = true //TODO implement emailer
+  var activated: Boolean = false
 
   val subscriptions: List[Subscription] = List.empty
 

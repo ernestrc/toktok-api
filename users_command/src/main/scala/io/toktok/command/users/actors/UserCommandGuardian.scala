@@ -13,6 +13,7 @@ import io.toktok.command.users.Exceptions.UserExistsException
 import io.toktok.command.users.ServiceConfig
 import io.toktok.model._
 import krakken.dal.MongoSource
+import krakken.model.Exceptions.KrakkenException
 import krakken.model.{Command, Receipt, TypeHint}
 import krakken.utils.Implicits._
 import org.bson.types.ObjectId
@@ -24,7 +25,7 @@ import scala.util.{Failure, Success}
 /**
  *
  */
-class UserGuardian extends Actor with ActorLogging {
+class UserCommandGuardian extends Actor with ActorLogging {
 
   import context.dispatcher
 
@@ -40,7 +41,7 @@ class UserGuardian extends Actor with ActorLogging {
     source.findAllEventsOfType[UserCreatedAnchor].foreach { anchor ⇒
       log.info(s"Booting up user actor for user ${anchor.username}")
       addUser(anchor)
-      context.actorOf(Props(classOf[UserActor], anchor, source), anchor.uuid.get.toString)
+      context.actorOf(Props(classOf[UserCommandActor], anchor, source), anchor.uuid.get.toString)
     }
     log.info(s"Users' actors: $users")
   }
@@ -53,14 +54,14 @@ class UserGuardian extends Actor with ActorLogging {
   val source = new MongoSource[UserEvent](db, serializers)
 
   def addUser(anchor: UserCreatedAnchor): Unit = {
-    users += (anchor.uuid.get → anchor.username)
+    users += ((anchor.uuid.get, anchor.username, anchor.email))
   }
 
-  val users = scala.collection.mutable.Set.empty[(ObjectId, String)]
+  val users = scala.collection.mutable.Set.empty[(ObjectId, String, String)]
 
   def createNewUserCommand(username: String, pass: String, email: String): Future[Receipt] = Future {
-    if (users.exists(_._2 == username))
-      throw UserExistsException(username)
+    if (users.exists(_._2 == username)) throw UserExistsException(username)
+    else if(users.exists(_._3 == email)) throw UserExistsException(email)
     else {
       val passHash = BCrypt.hashpw(pass, BCrypt.gensalt())
       val anchor = UserCreatedAnchor(None, username, passHash, email)
@@ -70,7 +71,7 @@ class UserGuardian extends Actor with ActorLogging {
   }.map { anchor: UserCreatedAnchor ⇒
     addUser(anchor)
     val msg = s"Successfully created user $username"
-    context.actorOf(Props(classOf[UserActor], anchor, source), anchor.uuid.get.toString)
+    context.actorOf(Props(classOf[UserCommandActor], anchor, source), anchor.uuid.get.toString)
     log.info(msg)
     Receipt(success = true, updated = anchor.uuid.get.toSid, message = msg)
   }.recover {
@@ -103,7 +104,7 @@ class UserGuardian extends Actor with ActorLogging {
     context.stop(context.child(uuid.toString).get)
     log.warning(s"Actor of $uuid was unresponsive so it was stopped!")
     val anchor: UserCreatedAnchor = source.findOneByObjectId[UserCreatedAnchor](uuid.toObjectId).get
-    val reborn = context.actorOf(Props(classOf[UserActor], anchor, source), uuid)
+    val reborn = context.actorOf(Props(classOf[UserCommandActor], anchor, source), uuid)
     reborn.tell(cmd, requester)
   }.recover {
     case err: Exception ⇒ requester ! Receipt.error(err, "Unable to process command!")

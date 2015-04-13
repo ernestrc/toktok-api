@@ -8,7 +8,7 @@ object Boot extends App {
 
   val endpoints =
     EndpointProps[UserEndpoint] ::
-    EndpointProps[SessionEndpoint] ::
+//    EndpointProps[SessionEndpoint] ::
     EndpointProps[InternalEndpoint] :: Nil
 
   MicroService("gateway", ApiConfig.HOST, ApiConfig.PORT, List.empty, endpoints)

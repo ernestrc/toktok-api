@@ -5,6 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.novus.salat.global._
 import com.novus.salat.grater
+import io.toktok.command.users.actors.UserCommandGuardian
 import io.toktok.gateway.ApiConfig
 import io.toktok.model.{ChangeUserPasswordCommand, CreateUserCommand, ForgotPasswordCommand}
 import krakken.http.Endpoint
@@ -17,7 +18,7 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
   import system.dispatcher
 
   val remoteCommandLoc: String = ApiConfig.USERS_CMD_LOCATION
-  val remoteCommandGuardianPath = "UserGuardian"
+  val remoteCommandGuardianPath = classOf[UserCommandGuardian].getSimpleName
 
   override val remoteQueryLoc: String = ""
   override val remoteQueryGuardianPath: String = ""

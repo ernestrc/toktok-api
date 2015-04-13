@@ -6,7 +6,7 @@ import krakken.MicroService
 
 object Boot extends App {
 
-  val actors = Props[UserGuardian] :: Props[SessionGuardian] :: Nil
+  val actors = Props[UserCommandGuardian] :: Props[SessionCommandGuardian] :: Nil
   
   MicroService("users_command", actors)
 
