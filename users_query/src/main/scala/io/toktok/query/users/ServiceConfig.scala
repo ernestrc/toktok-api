@@ -21,4 +21,8 @@ object ServiceConfig {
     FiniteDuration(config.getDuration("toktok.actors.timeout",
       TimeUnit.SECONDS), TimeUnit.SECONDS)
 
+  val ONLINE_THRESHOLD: FiniteDuration =
+    FiniteDuration(config.getDuration("toktok.online-threshold",
+      TimeUnit.SECONDS), TimeUnit.SECONDS)
+
 }

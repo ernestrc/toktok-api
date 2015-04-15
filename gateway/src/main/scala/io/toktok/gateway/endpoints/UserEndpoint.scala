@@ -7,11 +7,13 @@ import com.novus.salat.global._
 import com.novus.salat.grater
 import io.toktok.command.users.actors.UserCommandGuardian
 import io.toktok.gateway.ApiConfig
-import io.toktok.model.{ChangeUserPasswordCommand, CreateUserCommand, ForgotPasswordCommand}
+import io.toktok.model._
 import io.toktok.query.users.actors.UserQueryGuardian
 import krakken.http.Endpoint
 import krakken.model.{SID, Receipt}
 import krakken.utils.Implicits._
+import spray.json.DefaultJsonProtocol._
+import spray.json.{RootJsonFormat, JsonFormat}
 import spray.routing.Route
 
 class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
@@ -28,6 +30,8 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
   val fallbackTimeout: Timeout = ApiConfig.ENDPOINT_FALLBACK_TIMEOUT
 
   implicit val graterCreateUser = grater[CreateUserCommand]
+  implicit val receiptOnlineMarshaller: RootJsonFormat[Receipt[OnlineUsers]] =
+    Receipt.receiptFormat(jsonFormat1(OnlineUsers.apply))
 
   override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
     pathPrefix("users") {
@@ -57,6 +61,16 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
           entity(as[ForgotPasswordCommand](grater[ForgotPasswordCommand])) { cmd ⇒
             complete {
               commandGuardian.ask(cmd).mapTo[Receipt[Unit]]
+            }
+          }
+        }
+      }
+    } ~ pathPrefix("online") {
+      pathEndOrSingleSlash {
+        post {
+          entity(as[GetOnlineUsersQuery](grater[GetOnlineUsersQuery])) { cmd ⇒
+            complete {
+              queryGuardian.ask(cmd).mapTo[Receipt[OnlineUsers]]
             }
           }
         }
