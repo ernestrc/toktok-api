@@ -27,7 +27,7 @@ class UserCommandActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEv
 
   val subscriptions: List[Subscription] = List.empty
 
-  override val eventProcessor: PartialFunction[Event, Any] = {
+  override val eventProcessor: PartialFunction[Event, Unit] = {
     case _: UserActivatedEvent ⇒
       log.info(s"User $username has been activated")
       activated = true

@@ -27,7 +27,7 @@ class InternalEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
   implicit val cmdGrater = graterMarshallerConverter(grater[ChangeUserPasswordCommand])
 
-  override val route: (ActorSelection) ⇒ Route = { guardian ⇒
+  override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
     path("internal") {
       post {
         complete {

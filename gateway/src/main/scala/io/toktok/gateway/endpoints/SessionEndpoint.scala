@@ -5,10 +5,12 @@ import akka.pattern.ask
 import akka.util.Timeout
 import io.toktok.command.users.actors.SessionCommandGuardian
 import io.toktok.gateway.ApiConfig
-import io.toktok.model.{GenerateTokenCommand, TokenCreatedEvent}
+import io.toktok.model.{UserSession, GetUserSession, GenerateTokenCommand, TokenCreatedEvent}
+import io.toktok.query.users.actors.SessionQueryGuardian
 import krakken.http.Endpoint
 import krakken.model.Receipt
-import spray.routing.Route
+import spray.json.DefaultJsonProtocol._
+import spray.routing.{PathMatchers, Route}
 
 class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
@@ -19,14 +21,14 @@ class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
 
   override val remoteQueryLoc: String = ApiConfig.USERS_QUERY_LOCATION
-  override val remoteQueryGuardianPath: String = ""//classOf[SessionQueryGuardian].getSimpleName
+  override val remoteQueryGuardianPath: String = classOf[SessionQueryGuardian].getSimpleName
   override val remoteCommandLoc: String = ApiConfig.USERS_CMD_LOCATION
   override val remoteCommandGuardianPath: String = classOf[SessionCommandGuardian].getSimpleName
 
-  implicit val receiptTokenMarshaller = receiptMarshaller[TokenCreatedEvent]
+  implicit val receiptTokenMarshaller = Receipt.receiptFormat(jsonFormat2(TokenCreatedEvent.apply))
+  implicit val receiptSessionMarshaller = Receipt.receiptFormat(jsonFormat2(UserSession.apply))
 
-//TODO FIX java.lang.RuntimeException: serialize: Unsupported JSON transformation for class='scala.runtime.BoxedUnit', value='()'
-  override val route: (ActorSelection) ⇒ Route = { guardian ⇒
+  override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
     path("token") {
       get {
         parameters('sessionId.as[String]) { sessionId ⇒
@@ -34,6 +36,13 @@ class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
             entityCommandActor(sessionId).ask(GenerateTokenCommand(sessionId))
               .mapTo[Receipt[TokenCreatedEvent]]
           }
+        }
+      }
+    } ~ path("session" / PathMatchers.Segment) { userId ⇒
+      get {
+        complete {
+          queryGuardian.ask(GetUserSession(userId))
+            .mapTo[Receipt[UserSession]]
         }
       }
     }

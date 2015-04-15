@@ -73,7 +73,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
     val msg = s"Successfully created user $username"
     context.actorOf(Props(classOf[UserCommandActor], anchor, source), anchor.uuid.get.toString)
     log.info(msg)
-    Receipt(success = true, updated = anchor.uuid.map(_.toSid), message = msg)
+    Receipt(success = true, entity = anchor.uuid.map(_.toSid), message = msg)
   }.recover {
     case ex@UserExistsException(user) ⇒
       val msg = s"Could not create user $user because it already exists!"
@@ -86,7 +86,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
   }.andThen {
     //auto activate white-listed
     case Success(rec) if rec.success ⇒
-      val uuid = rec.updated
+      val uuid = rec.entity
       if (ServiceConfig.WHITELIST_EMAIL.exists(email.matches)) {
         val selection = context.system.actorSelection(context.system / self.path.name / uuid.get)
         selection.resolveOne().map { c ⇒
@@ -117,7 +117,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
     userActor.ask(cmd)(ServiceConfig.ACTOR_TIMEOUT).mapTo[Receipt[_]]
   }.recover {
     case ex: NoSuchElementException ⇒
-      Receipt(success = false, updated = None, message = "Username doesn't correspond to any user")
+      Receipt(success = false, entity = None, message = "Username doesn't correspond to any user")
   }
 
   override def receive: Receive = {
