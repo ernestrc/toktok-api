@@ -34,14 +34,10 @@ class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
   }
 
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT
-  implicit val logger: LoggingAdapter = log
   override implicit val entityId: Option[SID] = None
-  val client = MongoClient(ServiceConfig.mongoHost)
-  val db = client(ServiceConfig.mongoDb)
   val opentok = new OpenTok(ServiceConfig.OPENTOK_KEY, ServiceConfig.OPENTOK_SECRET)
-  val serializers: PartialFunction[TypeHint, Grater[_ <: SessionEvent]] = sessionEventSerializers
   val source: MongoSource[SessionEvent] =
-    new MongoSource[SessionEvent](db, serializers)
+    new MongoSource[SessionEvent](db)
 
   override val eventProcessor: PartialFunction[Event, Unit] = {
     case anchor: SessionCreatedAnchor ⇒ newChild(anchor)
@@ -56,8 +52,8 @@ class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
 
   val subscriptions: List[Subscription] =
     AkkaSubscription[UserActivatedEvent, GenerateSessionCommand](
-      grater[UserActivatedEvent], db, GlobalConfig.collectionsHost("UserEvent"),
-      GlobalConfig.collectionsDB("UserEvent")) {
+      grater[UserActivatedEvent], db, GlobalConfig.collectionsHost(classOf[UserEvent].getSimpleName),
+      GlobalConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
       a ⇒ GenerateSessionCommand(a.entityId)
     } :: Nil
 

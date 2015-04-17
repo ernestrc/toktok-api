@@ -14,7 +14,7 @@ import io.toktok.command.users.ServiceConfig
 import io.toktok.model._
 import krakken.dal.MongoSource
 import krakken.model.Exceptions.KrakkenException
-import krakken.model.{Command, Receipt, TypeHint}
+import krakken.model.{SID, Command, Receipt, TypeHint}
 import krakken.utils.Implicits._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
@@ -50,8 +50,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
   implicit val logger: LoggingAdapter = log
   val client = MongoClient(ServiceConfig.mongoHost)
   val db = client(ServiceConfig.mongoDb)
-  val serializers: PartialFunction[TypeHint, Grater[_ <: UserEvent]] = userEventSerializers
-  val source = new MongoSource[UserEvent](db, serializers)
+  val source = new MongoSource[UserEvent](db)
 
   def addUser(anchor: UserCreatedAnchor): Unit = {
     users += ((anchor.uuid.get, anchor.username, anchor.email))
@@ -73,7 +72,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
     val msg = s"Successfully created user $username"
     context.actorOf(Props(classOf[UserCommandActor], anchor, source), anchor.uuid.get.toString)
     log.info(msg)
-    Receipt(success = true, entity = anchor.uuid.map(_.toSid), message = msg)
+    Receipt(success = true, entity = anchor.uuid.get.toSid, message = msg)
   }.recover {
     case ex@UserExistsException(user) ⇒
       val msg = s"Could not create user $user because it already exists!"
@@ -86,12 +85,12 @@ class UserCommandGuardian extends Actor with ActorLogging {
   }.andThen {
     //auto activate white-listed
     case Success(rec) if rec.success ⇒
-      val uuid = rec.entity
+      val uuid = rec.entity.asInstanceOf[SID]
       if (ServiceConfig.WHITELIST_EMAIL.exists(email.matches)) {
-        val selection = context.system.actorSelection(context.system / self.path.name / uuid.get)
+        val selection = context.system.actorSelection(context.system / self.path.name / uuid)
         selection.resolveOne().map { c ⇒
           log.info(s"User's \'$username\' email \'$email\' is whitelisted. Activating user now!")
-          c.ask(ActivateUserCommand(uuid.get))
+          c.ask(ActivateUserCommand(uuid))
         }.andThen {
           case Failure(err) ⇒ log.error("Could not activate whitelisted user!")
         }

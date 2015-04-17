@@ -2,7 +2,7 @@ package io.toktok
 
 import com.novus.salat.Grater
 import krakken.macros.Macros._
-import krakken.model.TypeHint
+import krakken.model.{FromHintGrater, TypeHint}
 import com.novus.salat.global.ctx
 
 /**
@@ -10,8 +10,8 @@ import com.novus.salat.global.ctx
  */
 package object model {
 
-  val sessionEventSerializers: PartialFunction[TypeHint, Grater[_ <: SessionEvent]] = grateSealed[SessionEvent]
+  implicit val sessionEventSerializers: FromHintGrater[SessionEvent] = grateSealed[SessionEvent]
 
-  val userEventSerializers: PartialFunction[TypeHint, Grater[_ <: UserEvent]] = grateSealed[UserEvent]
+  implicit val userEventSerializers: FromHintGrater[UserEvent] = grateSealed[UserEvent]
 
 }

@@ -10,10 +10,7 @@ import io.toktok.gateway.ApiConfig
 import io.toktok.model._
 import io.toktok.query.users.actors.UserQueryGuardian
 import krakken.http.Endpoint
-import krakken.model.{SID, Receipt}
-import krakken.utils.Implicits._
-import spray.json.DefaultJsonProtocol._
-import spray.json.{RootJsonFormat, JsonFormat}
+import krakken.utils.Implicits.{graterFromResponseUnmarshaller, pimpedFutureOfReceipt}
 import spray.routing.Route
 
 class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
@@ -30,8 +27,6 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
   val fallbackTimeout: Timeout = ApiConfig.ENDPOINT_FALLBACK_TIMEOUT
 
   implicit val graterCreateUser = grater[CreateUserCommand]
-  implicit val receiptOnlineMarshaller: RootJsonFormat[Receipt[OnlineUsers]] =
-    Receipt.receiptFormat(jsonFormat1(OnlineUsers.apply))
 
   override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
     pathPrefix("users") {
@@ -39,10 +34,17 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
         post {
           entity(as[CreateUserCommand](graterCreateUser)) { cmd: CreateUserCommand ⇒
             complete {
-              commandGuardian.ask(cmd).mapTo[Receipt[SID]]
+              commandGuardian.ask(cmd).>>>[String]
+            }
+          }
+        } ~ get {
+          parameter('query.as[String]) { query ⇒
+            complete {
+              queryGuardian.ask(GetUsersByUsername(query)).>>>[UsersList]
             }
           }
         }
+
       } ~ path("password") {
         post {
           entity(as[ChangeUserPasswordCommand](grater[ChangeUserPasswordCommand])) { cmd ⇒
@@ -52,7 +54,7 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
                 case exception: Exception ⇒
                   log.warning(s"Worker of ${cmd.entityId} is not responding!")
                   commandGuardian.ask(cmd)
-              }.mapTo[Receipt[Unit]]
+              }.>>>[PasswordChangedEvent]
             }
           }
         }
@@ -60,7 +62,7 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
         post {
           entity(as[ForgotPasswordCommand](grater[ForgotPasswordCommand])) { cmd ⇒
             complete {
-              commandGuardian.ask(cmd).mapTo[Receipt[Unit]]
+              commandGuardian.ask(cmd).>>>[PasswordChangedEvent]
             }
           }
         }
@@ -70,11 +72,13 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
         post {
           entity(as[GetOnlineUsersQuery](grater[GetOnlineUsersQuery])) { cmd ⇒
             complete {
-              queryGuardian.ask(cmd).mapTo[Receipt[OnlineUsers]]
+              queryGuardian.ask(cmd).>>>[UsersList]
             }
           }
         }
       }
     }
   }
+
+
 }

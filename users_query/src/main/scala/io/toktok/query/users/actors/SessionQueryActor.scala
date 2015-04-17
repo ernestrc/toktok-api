@@ -1,14 +1,18 @@
 package io.toktok.query.users.actors
 
-import io.toktok.model.{UserSession, GetUserSession, SessionCreatedAnchor, SessionEvent}
-import krakken.dal.MongoSource
+import com.novus.salat.Grater
+import io.toktok.model.{GetUserSession, SessionCreatedAnchor, SessionEvent, UserSession}
 import krakken.model._
 import krakken.system.EventSourcedQueryActor
 
 /**
 * Created by ernest on 4/12/15.
 */
-class SessionQueryActor(anchor: SessionCreatedAnchor, val source: MongoSource[SessionEvent]) extends EventSourcedQueryActor[SessionEvent] {
+class SessionQueryActor(anchor: SessionCreatedAnchor) extends EventSourcedQueryActor[SessionEvent] {
+
+
+  override val subscriptionSerializers: FromHintGrater[AnyRef] =
+    PartialFunction.empty[TypeHint, Grater[_ <: SessionEvent]]
 
   override implicit val entityId: Option[SID] = Some(anchor.userId)
   val sessionId = anchor.opentokSessionId
