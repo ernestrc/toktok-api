@@ -6,7 +6,7 @@ import akka.util.Timeout
 import krakken.model.ctx
 import com.novus.salat.grater
 import io.toktok.model.ChangeUserPasswordCommand
-import krakken.http.Endpoint
+import krakken.http.CQRSEndpoint
 import krakken.utils.Implicits._
 import spray.httpx.PlayTwirlSupport
 import spray.routing.Route
@@ -14,7 +14,7 @@ import spray.routing.Route
 /**
  * Created by ernest on 4/4/15.
  */
-class InternalEndpoint(implicit val system: ActorSystem) extends Endpoint with PlayTwirlSupport {
+class InternalEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint with PlayTwirlSupport {
 
   override val remoteQueryLoc: String = ""
   override val remoteQueryGuardianPath: String = ""

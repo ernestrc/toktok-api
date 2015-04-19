@@ -9,11 +9,11 @@ import io.toktok.command.users.actors.SessionCommandGuardian
 import io.toktok.gateway.ApiConfig
 import io.toktok.model.{GenerateTokenCommand, GetUserSession, TokenCreatedEvent, UserSession}
 import io.toktok.query.users.actors.SessionQueryGuardian
-import krakken.http.Endpoint
+import krakken.http.CQRSEndpoint
 import spray.json.DefaultJsonProtocol._
 import spray.routing.{PathMatchers, Route}
 
-class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
+class SessionEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint {
 
   import krakken.utils.Implicits.pimpedFutureOfReceipt
   import system.dispatcher

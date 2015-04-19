@@ -32,6 +32,10 @@ object TokTokBuild extends Build {
     .dependsOn(core % "compile->compile;test->test")
     .enablePlugins(SbtTwirl)
 
+  lazy val analytics = Project("analytics", file("analytics"))
+    .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
+    .dependsOn(core % "compile->compile;test->test")
+
   lazy val root = Project(appName, file("."))
-    .aggregate(krakken, core, users_command, gateway, users_query, notifications)
+    .aggregate(krakken, core, users_command, gateway, users_query, notifications, analytics)
 }

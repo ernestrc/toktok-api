@@ -9,11 +9,11 @@ import io.toktok.command.users.actors.UserCommandGuardian
 import io.toktok.gateway.ApiConfig
 import io.toktok.model._
 import io.toktok.query.users.actors.UserQueryGuardian
-import krakken.http.Endpoint
+import krakken.http.CQRSEndpoint
 import krakken.utils.Implicits.{graterFromResponseUnmarshaller, pimpedFutureOfReceipt}
 import spray.routing.Route
 
-class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
+class UserEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint {
 
   import system.dispatcher
 
