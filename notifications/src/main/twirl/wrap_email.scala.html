@@ -1,0 +1,56 @@
+@(subject:String)(content: Any)
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>@subject</title>
+        <style>
+        body {
+        font: 11px 'Helvetica Neue', Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        }
+
+        img.logo {
+        width: 170px;
+        height: auto;
+            padding:25px;
+        }
+
+        div.subject {
+        max-width:225px;
+        position: absolute;
+        text-align:right;
+        top: 35px;
+        right: 25px;
+        font-size: 13px;
+        float:right;
+        }
+
+        .content{
+            padding-top:10px;
+            padding-left:20px;
+        }
+
+        .footer{
+        margin:30px 10px 0 0;
+        color:gray;
+        font-size:8px;
+        }
+        </style>
+    </head>
+    <body bgcolor="#F0F0F0">
+        <img class="logo" src="https://dl.dropboxusercontent.com/s/rx99ylqmkfcuf28/logo_toktok2.png" alt="Toktok" border="0" />
+        <div class="subject">
+            <div>@subject</div>
+        </div>
+        <hr class="sep" />
+        <div class="content">
+            @content
+            </br>
+            <p style="color:gray;font-size:10px">Contact us at <a href="mailto:info@@toktok.io">info@@toktok.io</a></p>
+            @*<p class="footer">Brought to you by <a href="https://github.com/opentok/longboard">opentok/longboard</a></p>*@
+        </div>
+        <br />
+
+    </body>
+</html>

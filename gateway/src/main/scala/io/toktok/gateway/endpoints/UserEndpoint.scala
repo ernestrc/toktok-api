@@ -3,7 +3,7 @@ package io.toktok.gateway.endpoints
 import akka.actor.{ActorSelection, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.novus.salat.global._
+import krakken.model.ctx
 import com.novus.salat.grater
 import io.toktok.command.users.actors.UserCommandGuardian
 import io.toktok.gateway.ApiConfig
@@ -29,56 +29,57 @@ class UserEndpoint(implicit val system: ActorSystem) extends Endpoint {
   implicit val graterCreateUser = grater[CreateUserCommand]
 
   override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
-    pathPrefix("users") {
-      pathEndOrSingleSlash {
-        post {
-          entity(as[CreateUserCommand](graterCreateUser)) { cmd: CreateUserCommand ⇒
-            complete {
-              commandGuardian.ask(cmd).>>>[String]
+    pathPrefix("v1") {
+      pathPrefix("users") {
+        pathEndOrSingleSlash {
+          post {
+            entity(as[CreateUserCommand](graterCreateUser)) { cmd: CreateUserCommand ⇒
+              complete {
+                commandGuardian.ask(cmd).>>>[String]
+              }
+            }
+          } ~ get {
+            parameter('query.as[String]) { query ⇒
+              complete {
+                queryGuardian.ask(GetUsersByUsername(query)).>>>[UsersList]
+              }
             }
           }
-        } ~ get {
-          parameter('query.as[String]) { query ⇒
+        } ~ path("password") {
+          post {
+            entity(as[ChangeUserPasswordCommand](grater[ChangeUserPasswordCommand])) { cmd ⇒
+              complete {
+                (entityCommandActor(cmd.entityId) ?? cmd).>>>[PasswordChangedEvent]
+              }
+            }
+          }
+        } ~ path("recover") {
+          post {
+            entity(as[ForgotPasswordCommand](grater[ForgotPasswordCommand])) { cmd ⇒
+              complete {
+                commandGuardian.ask(cmd).>>>[PasswordChangedEvent]
+              }
+            }
+          }
+        } ~ path("activate" / Segment) { userId ⇒
+          get {
             complete {
-              queryGuardian.ask(GetUsersByUsername(query)).>>>[UsersList]
+              (entityCommandActor(userId) ?? ActivateUserCommand(userId))
+                .>>>[UserActivatedEvent]
             }
           }
         }
-
-      } ~ path("password") {
-        post {
-          entity(as[ChangeUserPasswordCommand](grater[ChangeUserPasswordCommand])) { cmd ⇒
-            complete {
-              entityCommandActor(cmd.entityId).ask(cmd)(fallbackTimeout)
-                .recoverWith {
-                case exception: Exception ⇒
-                  log.warning(s"Worker of ${cmd.entityId} is not responding!")
-                  commandGuardian.ask(cmd)
-              }.>>>[PasswordChangedEvent]
-            }
-          }
-        }
-      } ~ path("recover") {
-        post {
-          entity(as[ForgotPasswordCommand](grater[ForgotPasswordCommand])) { cmd ⇒
-            complete {
-              commandGuardian.ask(cmd).>>>[PasswordChangedEvent]
-            }
-          }
-        }
-      }
-    } ~ pathPrefix("online") {
-      pathEndOrSingleSlash {
-        post {
-          entity(as[GetOnlineUsersQuery](grater[GetOnlineUsersQuery])) { cmd ⇒
-            complete {
-              queryGuardian.ask(cmd).>>>[UsersList]
+      } ~ pathPrefix("online") {
+        pathEndOrSingleSlash {
+          post {
+            entity(as[GetOnlineUsersQuery](grater[GetOnlineUsersQuery])) { cmd ⇒
+              complete {
+                queryGuardian.ask(cmd).>>>[UsersList]
+              }
             }
           }
         }
       }
     }
   }
-
-
 }

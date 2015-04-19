@@ -1,0 +1,16 @@
+@(userId: String, username: String)
+@wrap_email("Activate your Toktok.io account"){
+    <div>
+        <p>Hi <b>@username,</b></p>
+
+        <p>Thank you very much for registering with us.</p>
+
+        <p>Please, confirm your email by clicking on the following link:
+            <a href="http://localhost:2828/users/activate/@userId">Activation Link</a>.
+        </p>
+        <p>
+            Thanks for trying out Toktok!
+        </p>
+    </div>
+
+}

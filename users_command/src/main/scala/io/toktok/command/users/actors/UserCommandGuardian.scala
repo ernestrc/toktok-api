@@ -111,6 +111,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
 
   def forgotPasswordCommand(cmd: ForgotPasswordCommand): Future[Receipt[_]] = Future {
     val user = users.find(_._2 == cmd.username).get
+    log.debug("Found user {} in users collection of UserCommandGuardian", user)
     context.child(user._1.toString).get
   }.flatMap { userActor ⇒
     userActor.ask(cmd)(ServiceConfig.ACTOR_TIMEOUT).mapTo[Receipt[_]]

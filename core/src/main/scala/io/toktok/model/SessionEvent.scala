@@ -8,11 +8,11 @@ import spray.json.JsonFormat
 @Salat
 sealed trait SessionEvent extends Event
 
-case class TokenCreatedEvent(sessionId: String, token: String) extends SessionEvent
+case class TokenCreatedEvent(entityId: SID, token: String) extends SessionEvent
 
 object TokenCreatedEvent {
   implicit val tokenCreatedEventJsonFormat: JsonFormat[TokenCreatedEvent] =
     jsonFormat2(TokenCreatedEvent.apply)
 }
 
-case class SessionCreatedAnchor(userId: SID, opentokSessionId: SID) extends SessionEvent
+case class SessionCreatedAnchor(userId: SID, opentokSessionId: SID) extends Anchor with SessionEvent

@@ -1,5 +1,6 @@
 import sbt.Keys._
 import sbt._
+import play.twirl.sbt.SbtTwirl
 
 object TokTokBuild extends Build {
 
@@ -16,7 +17,7 @@ object TokTokBuild extends Build {
     .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
     .dependsOn(core % "compile->compile;test->test")
 
-  lazy val users_query = Project("users_view", file("users_query"))
+  lazy val users_query = Project("users_query", file("users_query"))
     .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
     .dependsOn(core % "compile->compile;test->test")
 
@@ -26,7 +27,11 @@ object TokTokBuild extends Build {
       users_query % "compile->compile;test->test",
       users_command % "compile->compile;test->test")
 
+  lazy val notifications = Project("notifications", file("notifications"))
+    .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
+    .dependsOn(core % "compile->compile;test->test")
+    .enablePlugins(SbtTwirl)
 
   lazy val root = Project(appName, file("."))
-    .aggregate(krakken, core, users_command, gateway, users_query)
+    .aggregate(krakken, core, users_command, gateway, users_query, notifications)
 }

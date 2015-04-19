@@ -4,7 +4,7 @@ import akka.actor.{ActorSelection, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.novus.salat._
-import com.novus.salat.global.ctx
+import krakken.model.ctx
 import io.toktok.command.users.actors.SessionCommandGuardian
 import io.toktok.gateway.ApiConfig
 import io.toktok.model.{GenerateTokenCommand, GetUserSession, TokenCreatedEvent, UserSession}
@@ -28,21 +28,22 @@ class SessionEndpoint(implicit val system: ActorSystem) extends Endpoint {
   override val remoteCommandGuardianPath: String = classOf[SessionCommandGuardian].getSimpleName
 
   override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
-    path("token") {
-      get {
-        parameters('sessionId.as[String]) { sessionId ⇒
+    pathPrefix("v1") {
+      path("token") {
+        get {
+          parameters('sessionId.as[String]) { sessionId ⇒
+            complete {
+              entityCommandActor(sessionId).ask(GenerateTokenCommand(sessionId)).>>>[TokenCreatedEvent]
+            }
+          }
+        }
+      } ~ path("session" / PathMatchers.Segment) { userId ⇒
+        get {
           complete {
-            entityCommandActor(sessionId).ask(GenerateTokenCommand(sessionId)).>>>[TokenCreatedEvent]
+            queryGuardian.ask(GetUserSession(userId)).>>>[UserSession]
           }
         }
       }
-    } ~ path("session" / PathMatchers.Segment) { userId ⇒
-      get {
-        complete {
-          queryGuardian.ask(GetUserSession(userId)).>>>[UserSession]
-        }
-      }
     }
-
   }
 }

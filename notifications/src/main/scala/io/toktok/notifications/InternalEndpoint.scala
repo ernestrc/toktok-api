@@ -1,20 +1,20 @@
-package io.toktok.gateway.endpoints
+package io.toktok.notifications
 
 import akka.actor.{ActorSelection, ActorSystem}
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.novus.salat.global.ctx
+import krakken.model.ctx
 import com.novus.salat.grater
-import io.toktok.gateway.ApiConfig
 import io.toktok.model.ChangeUserPasswordCommand
 import krakken.http.Endpoint
 import krakken.utils.Implicits._
+import spray.httpx.PlayTwirlSupport
 import spray.routing.Route
 
 /**
  * Created by ernest on 4/4/15.
  */
-class InternalEndpoint(implicit val system: ActorSystem) extends Endpoint {
+class InternalEndpoint(implicit val system: ActorSystem) extends Endpoint with PlayTwirlSupport {
 
   override val remoteQueryLoc: String = ""
   override val remoteQueryGuardianPath: String = ""
@@ -22,8 +22,8 @@ class InternalEndpoint(implicit val system: ActorSystem) extends Endpoint {
   override val commandGuardianActorSelection: ActorSelection = system.actorSelection("")
   override val remoteCommandGuardianPath: String = ""
   override val remoteCommandLoc: String = ""
-  implicit val timeout: Timeout = ApiConfig.ENDPOINT_TIMEOUT
-  val fallbackTimeout: Timeout = ApiConfig.ENDPOINT_FALLBACK_TIMEOUT
+  implicit val timeout: Timeout = Timeout(10L)
+  val fallbackTimeout: Timeout = Timeout(20L)
 
   implicit val cmdGrater = graterMarshallerConverter(grater[ChangeUserPasswordCommand])
 
@@ -36,7 +36,7 @@ class InternalEndpoint(implicit val system: ActorSystem) extends Endpoint {
       } ~ get {
         //      parameters('username.as[String]) { username ⇒
         complete {
-          ChangeUserPasswordCommand("551e0d62d4c615edb9da7dc5", "heai", "haio")
+          html.activate.apply("2213", "ernestrc")
         }
         //      }
       } ~ put {

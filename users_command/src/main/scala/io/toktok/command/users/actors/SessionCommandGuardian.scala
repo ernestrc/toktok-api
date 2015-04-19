@@ -6,7 +6,7 @@ import akka.event.LoggingAdapter
 import akka.pattern._
 import akka.util.Timeout
 import com.mongodb.casbah.MongoClient
-import com.novus.salat.global.ctx
+import krakken.model.ctx
 import com.novus.salat.{Grater, _}
 import com.opentok.{MediaMode, OpenTok, SessionProperties}
 import io.toktok.command.users.ServiceConfig
@@ -31,6 +31,7 @@ class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
       log.info(s"Booting up session actor for user ${anchor.userId}")
       newChild(anchor)
     }
+    subscriptions.foreach(_.subscribe())
   }
 
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT

@@ -1,7 +1,7 @@
 package io.toktok.command.users.actors
 
 import akka.actor._
-import io.toktok.command.users.Exceptions.WrongPasswordException
+import io.toktok.command.users.Exceptions.{WrongEmailPasswordException, UserAlreadyActivatedException, WrongPasswordException}
 import io.toktok.model._
 import krakken.dal.MongoSource
 import krakken.model._
@@ -10,11 +10,6 @@ import krakken.utils.Implicits._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
 
-/**
- *
- * @param anchor
- * @param source
- */
 class UserCommandActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) extends EventSourcedCommandActor[UserEvent] {
 
   implicit val system: ActorSystem = context.system
@@ -34,20 +29,22 @@ class UserCommandActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEv
     case PasswordChangedEvent(uuid, pass) ⇒
       log.info(s"User $username changed password to $pass")
       password = pass
-    case SendNewPasswordEvent(uuid, pass) ⇒
+    case SendNewPasswordEvent(uuid, pass, em) ⇒
       log.info(s"New password for user $username should be on its way")
   }
 
   override val commandProcessor: PartialFunction[Command, List[UserEvent]] = {
-    case ActivateUserCommand(id) ⇒ UserActivatedEvent(id) :: Nil
+    case ActivateUserCommand(id) ⇒
+      if(!activated) UserActivatedEvent(id) :: Nil
+      else throw new UserAlreadyActivatedException
     case ForgotPasswordCommand(user, mail) ⇒ val em = email;
       mail match {
         case `em` ⇒ val newPass = ObjectId.get().toString
-          SendNewPasswordEvent(entityId.get, newPass) :: PasswordChangedEvent(entityId.get, newPass) :: Nil
+          SendNewPasswordEvent(entityId.get, newPass, email) ::
+            PasswordChangedEvent(entityId.get, BCrypt.hashpw(newPass, BCrypt.gensalt())) :: Nil
         case anyElse ⇒
-          val msg = "Wrong email and username combination!"
-          log.debug(msg + s" $mail did not match $em")
-          throw new Exception(msg)
+          log.debug(s"Wrong email and username combination! $mail did not match $em")
+          throw new WrongEmailPasswordException
       }
     case ChangeUserPasswordCommand(uuid, newPass, oldPass) ⇒
       if (BCrypt.checkpw(oldPass, password)) {

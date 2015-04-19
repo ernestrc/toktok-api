@@ -1,7 +1,7 @@
 package io.toktok.query.users.actors
 
 import com.novus.salat._
-import com.novus.salat.global.ctx
+import krakken.model.ctx
 import io.toktok.model._
 import io.toktok.query.users.ServiceConfig
 import krakken.config.GlobalConfig
