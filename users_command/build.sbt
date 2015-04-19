@@ -1,7 +1,8 @@
 name := "users_command"
 
 libraryDependencies ++= List(
-  "com.tokbox"               % "opentok-server-sdk"         % "2.2.2")
+  "com.tokbox"               % "opentok-server-sdk"         % "2.2.2" exclude("org.jboss.netty","netty")
+  )
 
 javaOptions in Revolver.reStart ++= Seq (
   "-Xmx2g"//,
