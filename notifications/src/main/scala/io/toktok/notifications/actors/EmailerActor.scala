@@ -69,7 +69,7 @@ class EmailerActor extends EventSourcedCommandActor[NotificationEvent] {
       }
     case SendActivationEmailCommand(userId, username, email) ⇒
       Await.result(
-        sendEmail(html.activate(userId, username), "Activate your Toktok.io account", email),
+        sendEmail(html.activate(userId, username, ServiceConfig.activationUrl), "Activate your Toktok.io account", email),
         ServiceConfig.ACTOR_TIMEOUT) match {
         case m if m.ErrorCode == 0 ⇒ ActivationEmailSendEvent(userId, email) :: Nil
       }

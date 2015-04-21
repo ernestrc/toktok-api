@@ -11,7 +11,8 @@ import io.toktok.model._
 import io.toktok.query.users.actors.UserQueryGuardian
 import krakken.http.CQRSEndpoint
 import krakken.utils.Implicits.{graterFromResponseUnmarshaller, pimpedFutureOfReceipt}
-import spray.routing.Route
+import spray.http.{StatusCodes, Uri}
+import spray.routing.{RequestContext, Route}
 
 class UserEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint {
 
@@ -74,7 +75,7 @@ class UserEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint {
           post {
             entity(as[GetOnlineUsersQuery](grater[GetOnlineUsersQuery])) { cmd ⇒
               complete {
-                queryGuardian.ask(cmd).>>>[UsersList]
+                queryGuardian.ask(cmd).>>>[UsernamesList]
               }
             }
           }

@@ -8,6 +8,12 @@ import scala.concurrent.duration.FiniteDuration
 
 object ServiceConfig extends KrakkenConfig {
 
+  val activationUrl: String = {
+    val a = config.getString("toktok.activation-url")
+    if (a.endsWith("/")) a.dropRight(1)
+    else a
+  }
+
   val mongoHost: String = links.find(_.host.alias == "mongo_query")
     .map(_.host.ip).getOrElse {
     config.getString("krakken.source.host")

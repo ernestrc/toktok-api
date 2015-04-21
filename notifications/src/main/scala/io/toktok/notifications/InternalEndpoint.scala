@@ -36,7 +36,7 @@ class InternalEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint wi
       } ~ get {
         //      parameters('username.as[String]) { username ⇒
         complete {
-          html.activate.apply("2213", "ernestrc")
+          html.activate.apply("2213", "ernestrc", "http://localhost:2828/v1/users/activate/")
         }
         //      }
       } ~ put {

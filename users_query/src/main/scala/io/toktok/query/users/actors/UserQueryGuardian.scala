@@ -1,11 +1,13 @@
 package io.toktok.query.users.actors
 
-import com.mongodb.casbah.{Imports, MongoClient}
+import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah._
 import com.novus.salat._
 import io.toktok.model._
 import io.toktok.query.users.ServiceConfig
 import krakken.model.{ctx, _}
 import krakken.system.EventSourcedQueryActor
+import org.bson.types.ObjectId
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -33,11 +35,17 @@ class UserQueryGuardian extends EventSourcedQueryActor[UserEvent] {
   
   override val queryProcessor: PartialFunction[Query, View] = {
     case GetUsersByUsername(query) ⇒
-      UsersList(allByUsername.filter(_.startsWith(query)).toList)
+      UsersList(allByUsername.filter(_.startsWith(query)).toList.foldLeft(List.empty[User]){
+        (acc, u) ⇒
+          val id = subscriptionsColl.find(MongoDBObject("username" → u)).one().get("_id")
+            .asInstanceOf[ObjectId].toString
+          User(id, u) :: acc
+      })
+
     case GetOnlineUsersQuery(userId, users) ⇒
       online ++= userId :: Nil
       scheduleRemove(userId)
-      UsersList(users.foldLeft(List.empty[SID]) {
+      UsernamesList(users.foldLeft(List.empty[SID]) {
         case (acc, user) if online.contains(user) ⇒ user :: acc
         case (acc, user) ⇒ acc
       })

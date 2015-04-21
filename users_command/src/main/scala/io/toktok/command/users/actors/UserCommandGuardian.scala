@@ -22,9 +22,6 @@ import org.mindrot.jbcrypt.BCrypt
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-/**
- *
- */
 class UserCommandGuardian extends Actor with ActorLogging {
 
   import context.dispatcher
