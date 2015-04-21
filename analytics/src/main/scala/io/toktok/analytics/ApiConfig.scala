@@ -2,23 +2,28 @@ package io.toktok.analytics
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.config.{ConfigFactory, Config}
+import krakken.config.KrakkenConfig
 
 import scala.concurrent.duration.FiniteDuration
 
 /**
  * Created by ernest on 4/18/15.
  */
-object ApiConfig {
-  private val config: Config = ConfigFactory.load()
+object ApiConfig extends KrakkenConfig {
 
-  val mongoHost = config.getString("toktok.source.host")
+  val mongoHost: String = links.find(_.host.alias == "mongo_query")
+    .map(_.host.ip).getOrElse {
+    config.getString("krakken.source.host")
+  }
 
-  val mongoDb = config.getString("toktok.source.db")
+  val mongoPort: Int = links.find(_.host.alias == "mongo_query")
+    .map(_.port).getOrElse {
+    config.getInt("krakken.source.port")
+  }
 
-  val mongoPort = config.getInt("toktok.source.port")
+  val dbName = config.getString("krakken.source.db")
 
-  val analyticsColl = config.getString("toktok.source.analytics-coll")
+  val analyticsColl = config.getString("toktok.analytics-coll")
 
   val PORT = config.getInt("toktok.port")
 

@@ -2,22 +2,27 @@ package io.toktok.notifications
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.config.{ConfigFactory, Config}
+import krakken.config.KrakkenConfig
 
 import scala.concurrent.duration.FiniteDuration
 
-object ServiceConfig {
+object ServiceConfig extends KrakkenConfig {
 
-  private val config: Config = ConfigFactory.load()
+  val mongoHost: String = links.find(_.host.alias == "mongo_query")
+    .map(_.host.ip).getOrElse {
+    config.getString("krakken.source.host")
+  }
 
-  val ACTOR_TIMEOUT: FiniteDuration =
-    FiniteDuration(config.getDuration("toktok.actors.timeout",
-      TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val mongoPort: Int = links.find(_.host.alias == "mongo_query")
+    .map(_.port).getOrElse {
+    config.getInt("krakken.source.port")
+  }
+
+  val dbName = config.getString("krakken.source.db")
 
   val RESET_RETRIES = config.getInt("toktok.actors.supervisor.retries")
 
   val RESET_WITHIN = FiniteDuration(config.getDuration("toktok.actors.supervisor.within",
     TimeUnit.SECONDS), TimeUnit.SECONDS)
-
 
 }

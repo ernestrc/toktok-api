@@ -3,12 +3,13 @@ package io.toktok.notifications.actors
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.mongodb.casbah.MongoClient
 import com.novus.salat._
 import krakken.model.ctx
 import com.postmark.{Message, PostmarkActor}
 import io.toktok.model.{UserEvent, _}
 import io.toktok.notifications.ServiceConfig
-import krakken.config.GlobalConfig
+import krakken.config.KrakkenConfig
 import krakken.dal.MongoSource
 import krakken.model._
 import krakken.system.EventSourcedCommandActor
@@ -24,14 +25,17 @@ class EmailerActor extends EventSourcedCommandActor[NotificationEvent] {
 
   val postmarkActor: ActorRef = context.actorOf(Props[PostmarkActor])
 
+  val db = MongoClient(ServiceConfig.mongoHost,
+    ServiceConfig.mongoPort)(ServiceConfig.dbName)
+
   override val subscriptions: List[Subscription] =
     AkkaSubscription[UserCreatedAnchor, SendActivationEmailCommand](
-      grater[UserCreatedAnchor], db, GlobalConfig.collectionsHost(classOf[UserEvent].getSimpleName),
-      GlobalConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
+      grater[UserCreatedAnchor], db, ServiceConfig.collectionsHost(classOf[UserEvent].getSimpleName),
+      ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
       a ⇒ SendActivationEmailCommand(a.uuid.get.toString, a.username, a.email)
     } :: AkkaSubscription[SendNewPasswordEvent, SendNewPasswordCommand](
-      grater[SendNewPasswordEvent], db, GlobalConfig.collectionsHost(classOf[UserEvent].getSimpleName),
-      GlobalConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
+      grater[SendNewPasswordEvent], db, ServiceConfig.collectionsHost(classOf[UserEvent].getSimpleName),
+      ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
       a ⇒ SendNewPasswordCommand(a.entityId, a.newPassword, a.email)
     } :: Nil
 

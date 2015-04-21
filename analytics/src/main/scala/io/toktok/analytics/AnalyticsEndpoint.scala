@@ -11,7 +11,7 @@ import spray.routing.Route
 class AnalyticsEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
   val client: MongoClient = MongoClient(ApiConfig.mongoHost, ApiConfig.mongoPort)
-  val db = client(ApiConfig.mongoDb)
+  val db = client(ApiConfig.dbName)
 
   import system.dispatcher
 

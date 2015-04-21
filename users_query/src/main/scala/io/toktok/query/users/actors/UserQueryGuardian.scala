@@ -1,11 +1,10 @@
 package io.toktok.query.users.actors
 
+import com.mongodb.casbah.{Imports, MongoClient}
 import com.novus.salat._
-import krakken.model.ctx
 import io.toktok.model._
 import io.toktok.query.users.ServiceConfig
-import krakken.config.GlobalConfig
-import krakken.model._
+import krakken.model.{ctx, _}
 import krakken.system.EventSourcedQueryActor
 
 import scala.collection.mutable.ArrayBuffer
@@ -13,6 +12,9 @@ import scala.collection.mutable.ArrayBuffer
 class UserQueryGuardian extends EventSourcedQueryActor[UserEvent] {
 
   import context.dispatcher
+
+  override val db: Imports.MongoDB =
+    MongoClient(ServiceConfig.mongoHost, ServiceConfig.mongoPort)(ServiceConfig.dbName)
 
   case class OnlineTimeout(userId: SID)
 
@@ -26,8 +28,8 @@ class UserQueryGuardian extends EventSourcedQueryActor[UserEvent] {
 
   override val subscriptions: List[Subscription] =
     AkkaSubscription.forView[UserCreatedAnchor](grater[UserCreatedAnchor],
-      db, GlobalConfig.collectionsHost(classOf[UserEvent].getSimpleName),
-      GlobalConfig.collectionsDB(classOf[UserEvent].getSimpleName)) :: Nil
+      db, ServiceConfig.collectionsHost(classOf[UserEvent].getSimpleName),
+      ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) :: Nil
   
   override val queryProcessor: PartialFunction[Query, View] = {
     case GetUsersByUsername(query) ⇒

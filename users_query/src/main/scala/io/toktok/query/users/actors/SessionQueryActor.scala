@@ -1,15 +1,17 @@
 package io.toktok.query.users.actors
 
+import com.mongodb.casbah.{MongoClient, Imports}
 import com.novus.salat.Grater
 import io.toktok.model.{GetUserSession, SessionCreatedAnchor, SessionEvent, UserSession}
+import io.toktok.query.users.ServiceConfig
 import krakken.model._
 import krakken.system.EventSourcedQueryActor
 
-/**
-* Created by ernest on 4/12/15.
-*/
+
 class SessionQueryActor(anchor: SessionCreatedAnchor) extends EventSourcedQueryActor[SessionEvent] {
 
+  override val db: Imports.MongoDB = MongoClient(ServiceConfig.mongoHost,
+    ServiceConfig.mongoPort)(ServiceConfig.dbName)
 
   override val subscriptionSerializers: FromHintGrater[AnyRef] =
     PartialFunction.empty[TypeHint, Grater[_ <: SessionEvent]]
@@ -23,7 +25,7 @@ class SessionQueryActor(anchor: SessionCreatedAnchor) extends EventSourcedQueryA
     case _ ⇒
   }
 
-  override val queryProcessor :PartialFunction[Query, View] = {
-    case cmd @ GetUserSession(userId) ⇒ UserSession(anchor.userId, sessionId)
+  override val queryProcessor: PartialFunction[Query, View] = {
+    case cmd@GetUserSession(userId) ⇒ UserSession(anchor.userId, sessionId)
   }
 }

@@ -3,19 +3,27 @@ package io.toktok.command.users
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.{Config, ConfigFactory}
+import krakken.config.KrakkenConfig
+import krakken.utils.io.loadHosts
 
 import scala.collection.convert.Wrappers
 import scala.concurrent.duration.FiniteDuration
+import scala.io._
+import krakken.utils.io._
 
-object ServiceConfig {
+object ServiceConfig extends KrakkenConfig {
 
-  private val config: Config = ConfigFactory.load()
+  val dbName: String = config.getString("krakken.source.db")
 
-  val mongoHost = config.getString("toktok.source.host")
+  val mongoHost: String = links.find(_.host.alias == "mongo_command")
+    .map(_.host.ip).getOrElse {
+    config.getString("krakken.source.host")
+  }
 
-  val mongoDb = config.getString("toktok.source.db")
-
-  def collectionsHost(collection: String) = config.getString(s"toktok.source.collections.$collection.host")
+  val mongoPort: Int = links.find(_.host.alias == "mongo_command")
+    .map(_.port).getOrElse {
+    config.getInt("krakken.source.port")
+  }
 
   val RESET_RETRIES = config.getInt("toktok.actors.supervisor.retries")
 
@@ -25,10 +33,6 @@ object ServiceConfig {
   val OPENTOK_KEY = config.getInt("toktok.opentok.apikey")
 
   val OPENTOK_SECRET = config.getString("toktok.opentok.secret")
-
-  val ACTOR_TIMEOUT: FiniteDuration =
-  FiniteDuration(config.getDuration("toktok.actors.timeout",
-  TimeUnit.SECONDS), TimeUnit.SECONDS)
 
   val WHITELIST_EMAIL =
     Wrappers.JListWrapper(config.getStringList("toktok.email-whitelist")).toList

@@ -5,13 +5,13 @@ import akka.actor._
 import akka.event.LoggingAdapter
 import akka.pattern._
 import akka.util.Timeout
-import com.mongodb.casbah.MongoClient
+import com.mongodb.casbah.{MongoDB, MongoClient}
 import krakken.model.ctx
 import com.novus.salat.{Grater, _}
 import com.opentok.{MediaMode, OpenTok, SessionProperties}
 import io.toktok.command.users.ServiceConfig
 import io.toktok.model._
-import krakken.config.GlobalConfig
+import krakken.config.KrakkenConfig
 import krakken.dal.MongoSource
 import krakken.model._
 import krakken.system.EventSourcedCommandActor
@@ -34,6 +34,9 @@ class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
     subscriptions.foreach(_.subscribe())
   }
 
+  val db: MongoDB = MongoClient(ServiceConfig.mongoHost,
+    ServiceConfig.mongoPort)(ServiceConfig.dbName)
+
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT
   override implicit val entityId: Option[SID] = None
   val opentok = new OpenTok(ServiceConfig.OPENTOK_KEY, ServiceConfig.OPENTOK_SECRET)
@@ -53,8 +56,8 @@ class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
 
   val subscriptions: List[Subscription] =
     AkkaSubscription[UserActivatedEvent, GenerateSessionCommand](
-      grater[UserActivatedEvent], db, GlobalConfig.collectionsHost(classOf[UserEvent].getSimpleName),
-      GlobalConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
+      grater[UserActivatedEvent], db, ServiceConfig.collectionsHost(classOf[UserEvent].getSimpleName),
+      ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
       a ⇒ GenerateSessionCommand(a.entityId)
     } :: Nil
 

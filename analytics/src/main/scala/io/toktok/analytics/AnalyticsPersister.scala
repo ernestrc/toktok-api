@@ -29,7 +29,7 @@ class AnalyticsPersister(db: MongoDB) extends Actor with ActorLogging {
     case o: String ⇒
       val bson: DBObject = o.parseJson.asJsObject
       val w = analyticsCol.save(bson)
-      log.debug("Received and saved {}", bson)
+      log.debug("Received, parsed and saved item")
       sender() ! "OK"
   }
 }

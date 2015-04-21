@@ -48,8 +48,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
 
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT
   implicit val logger: LoggingAdapter = log
-  val client = MongoClient(ServiceConfig.mongoHost)
-  val db = client(ServiceConfig.mongoDb)
+  val db = MongoClient(ServiceConfig.mongoHost, ServiceConfig.mongoPort)(ServiceConfig.dbName)
   val source = new MongoSource[UserEvent](db)
 
   def addUser(anchor: UserCreatedAnchor): Unit = {
