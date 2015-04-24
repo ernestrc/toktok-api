@@ -1,20 +1,21 @@
 #!/usr/bin/env python2.7
 import os
 import subprocess
+from subprocess import *
 import shutil
 import sys
 
-PROJECTS = {'gateway': 'io.toktok.gateway.Boot',
+PROJECTS = {'users_command': 'io.toktok.command.users.Boot',
+            'gateway': 'io.toktok.gateway.Boot',
             'analytics': 'io.toktok.analytics.Boot',
             'notifications': 'io.toktok.notifications.Boot',
-            'users_command': 'io.toktok.command.users.Boot',
             'users_query': 'io.toktok.query.users.Boot'}
 
 TEMPLATE = 'krakken/deploy/microservice/Dockerfile'
 
 SCALA = '2.11'
 
-REPO = 'toktok'
+DOCKER_REPO = 'toktok'
 
 
 def parseVersion():
@@ -43,14 +44,14 @@ def buildDockerfile(pr, v):
 
 
 def buildImage(df, pr, v):
-    tag = '{}/{}:{}'.format(REPO, pr, v)
+    tag = '{}/{}:{}'.format(DOCKER_REPO, pr, v)
     cmd = 'docker build --file={} -t {} .'.format(df, tag)
     p = subprocess.Popen(cmd, shell=True)
     return p.wait()
 
 
 def pushImage(pr, v):
-    cmd = 'docker push {}/{}:{}'.format(REPO, pr, v)
+    cmd = 'docker push {}/{}:{}'.format(DOCKER_REPO, pr, v)
     p = subprocess.Popen(cmd, shell=True)
     return p.wait()
 
@@ -61,29 +62,75 @@ def checkStatus(status, msg):
         sys.exit(2)
 
 
-def main():
+def parseCommitId():
+    cmd = 'git rev-parse HEAD'
+    p = subprocess.Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate()
+    status = p.wait()
+    if status != 0:
+        raise Exception('There was an error when parsing last commit id')
+    print 'Parsed commit id {}. Using it as image tag...'.format(stdout)
+    return stdout.strip()
+
+
+def main(release=False):
     p = subprocess.Popen('sbt assembly', shell=True)
     status = p.wait()
     status = 0
     print 'Finished building jars. Status code is %s' % (status)
 
     version = parseVersion()
+    image_version = version if release else parseCommitId()
 
     for project in PROJECTS.keys():
 
         dockerfile = buildDockerfile(project, version)
 
-        build_status = buildImage(dockerfile, project, version)
+        build_status = buildImage(dockerfile, project, image_version)
 
         checkStatus(build_status,
                     '\nThere was problem when building image for {}'.format(
                         project))
 
-        push_status = pushImage(project, version)
+        push_status = pushImage(project, image_version)
 
         checkStatus(push_status,
                     '\nThere was a problem when pushing image!')
 
 
 if __name__ == '__main__':
-    main()
+    usage = '''
+This script assembles (via sbt assembly) all the projects in your build.sbt
+and uses a template Dockerfile to build and push a docker image for every project.
+It will use the last commit id as the image tag unless specified otherwise with
+--release flag.
+
+
+USAGE: build.py [options]
+
+OPTIONS:
+
+    --release               Uses version in version.sbt as the docker image tag
+
+    --help, -h              Display this message
+
+'''
+
+    def printUsage(msg):
+        print msg
+        print usage
+        sys.exit(1)
+
+    SUPPORTED = ['--release']
+    flags = [flag for flag in sys.argv if flag.startswith('-')]
+    [printUsage('Unrecognized flag ' + flag) for flag in flags
+     if flag.split('=')[0] not in SUPPORTED]
+
+    args = [arg for arg in sys.argv if not arg.startswith('-')]
+
+    if '--help' in flags or '-h' in flags:
+        printUsage('')
+
+    RELEASE = True if '--release' in flags else False
+
+    main(RELEASE)
