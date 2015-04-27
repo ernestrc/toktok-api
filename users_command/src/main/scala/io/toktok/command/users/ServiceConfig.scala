@@ -4,24 +4,23 @@ import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.{Config, ConfigFactory}
 import krakken.config.KrakkenConfig
-import krakken.utils.io.loadHosts
+import krakken.utils.io._
 
 import scala.collection.convert.Wrappers
 import scala.concurrent.duration.FiniteDuration
 import scala.io._
-import krakken.utils.io._
 
 object ServiceConfig extends KrakkenConfig {
 
   val dbName: String = config.getString("krakken.source.db")
 
-  val mongoHost: String = links.find(_.host.alias == "mongo_command")
-    .map(_.host.ip).getOrElse {
+  val mongoContainer = getContainerLink("mongo_command")
+
+  val mongoHost: String = mongoContainer.map(_.host.ip).getOrElse {
     config.getString("krakken.source.host")
   }
 
-  val mongoPort: Int = links.find(_.host.alias == "mongo_command")
-    .map(_.port).getOrElse {
+  val mongoPort: Int = mongoContainer.map(_.port).getOrElse {
     config.getInt("krakken.source.port")
   }
 

@@ -1,0 +1,18 @@
+{
+  "id": "analytics",
+  "kind": "Pod",
+  "apiVersion": "v1beta1",
+  "desiredState": {
+    "manifest": {
+      "version": "v1beta1",
+      "containers": [{
+        "name": "analytics",
+        "image": "toktok/analytics:8fbfc69f07c2e0fbe1d4d64e3b55c17d19bfd486",
+        "ports": [{
+          "containerPort": 4646,
+          "hostPort": 4646
+        }]
+      }]
+    }
+  }
+}

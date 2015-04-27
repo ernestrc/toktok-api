@@ -14,6 +14,12 @@ scalacOptions in ThisBuild ++= Seq(
   "-encoding", "UTF-8"
 )
 
+javacOptions in ThisBuild ++= Seq(
+  "-target", "1.7",
+  "-source" , "1.7",
+  "-encoding", "UTF-8"
+)
+
 resolvers in ThisBuild ++= Seq(
   "Typesafe Repository"       at        "http://repo.typesafe.com/typesafe/releases/",
   "Unstable Build Repo"       at        "http://dl.bintray.com/ernestrc/maven/",

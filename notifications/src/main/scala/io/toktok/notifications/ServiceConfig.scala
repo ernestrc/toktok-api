@@ -3,6 +3,7 @@ package io.toktok.notifications
 import java.util.concurrent.TimeUnit
 
 import krakken.config.KrakkenConfig
+import krakken.utils.io._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -14,13 +15,13 @@ object ServiceConfig extends KrakkenConfig {
     else a
   }
 
-  val mongoHost: String = links.find(_.host.alias == "mongo_query")
-    .map(_.host.ip).getOrElse {
+  val mongoContainer = getContainerLink("mongo_query")
+
+  val mongoHost: String = mongoContainer.map(_.host.ip).getOrElse {
     config.getString("krakken.source.host")
   }
 
-  val mongoPort: Int = links.find(_.host.alias == "mongo_query")
-    .map(_.port).getOrElse {
+  val mongoPort: Int = mongoContainer.map(_.port).getOrElse {
     config.getInt("krakken.source.port")
   }
 

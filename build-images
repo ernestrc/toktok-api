@@ -74,6 +74,7 @@ def parseCommitId():
 
 
 def main(release=False):
+    subprocess.Popen('git pull origin master', shell=True).wait()
     p = subprocess.Popen('sbt assembly', shell=True)
     status = p.wait()
     status = 0
