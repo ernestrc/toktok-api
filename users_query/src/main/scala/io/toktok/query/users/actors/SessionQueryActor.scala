@@ -1,6 +1,6 @@
 package io.toktok.query.users.actors
 
-import com.mongodb.casbah.{MongoClient, Imports}
+import com.mongodb.casbah.{MongoDB, MongoClient, Imports}
 import com.novus.salat.Grater
 import io.toktok.model.{GetUserSession, SessionCreatedAnchor, SessionEvent, UserSession}
 import io.toktok.query.users.ServiceConfig
@@ -9,9 +9,6 @@ import krakken.system.EventSourcedQueryActor
 
 
 class SessionQueryActor(anchor: SessionCreatedAnchor) extends EventSourcedQueryActor[SessionEvent] {
-
-  override val db: Imports.MongoDB = MongoClient(ServiceConfig.mongoHost,
-    ServiceConfig.mongoPort)(ServiceConfig.dbName)
 
   override val subscriptionSerializers: FromHintGrater[AnyRef] =
     PartialFunction.empty[TypeHint, Grater[_ <: SessionEvent]]

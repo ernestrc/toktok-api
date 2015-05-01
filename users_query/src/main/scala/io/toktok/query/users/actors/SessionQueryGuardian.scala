@@ -1,21 +1,15 @@
 package io.toktok.query.users.actors
 
 import akka.actor.{ActorRef, Props}
-import com.mongodb.casbah.{MongoClient, Imports}
 import com.novus.salat._
+import io.toktok.model._
 import io.toktok.query.users.ServiceConfig
 import krakken.model.Receipt.Empty
-import krakken.model.ctx
-import io.toktok.model._
-import krakken.config.KrakkenConfig
-import krakken.model._
+import krakken.model.{ctx, _}
 import krakken.system.EventSourcedQueryActor
 
 
 class SessionQueryGuardian extends EventSourcedQueryActor[SessionEvent] {
-
-  override val db: Imports.MongoDB =
-    MongoClient(ServiceConfig.mongoHost, ServiceConfig.mongoPort)(ServiceConfig.dbName)
 
   def newChild(anchor: SessionCreatedAnchor): ActorRef = {
     context.actorOf(Props(classOf[SessionQueryActor], anchor), anchor.userId)

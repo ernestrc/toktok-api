@@ -8,14 +8,13 @@ import akka.event.LoggingAdapter
 import akka.pattern._
 import akka.util.Timeout
 import com.mongodb.casbah.MongoClient
-import com.novus.salat.Grater
 import io.toktok.command.users.Exceptions.UserExistsException
 import io.toktok.command.users.ServiceConfig
 import io.toktok.model._
 import krakken.dal.MongoSource
-import krakken.model.Exceptions.KrakkenException
-import krakken.model.{SID, Command, Receipt, TypeHint}
+import krakken.model.{Command, Receipt, SID}
 import krakken.utils.Implicits._
+import krakken.utils.io._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
 
@@ -38,14 +37,20 @@ class UserCommandGuardian extends Actor with ActorLogging {
     source.findAllEventsOfType[UserCreatedAnchor].foreach { anchor ⇒
       log.info(s"Booting up user actor for user ${anchor.username}")
       addUser(anchor)
-      context.actorOf(Props(classOf[UserCommandActor], anchor, source), anchor.uuid.get.toString)
+      context.actorOf(Props(classOf[UserCommandActor], anchor), anchor.uuid.get.toString)
     }
     log.info(s"Users' actors: $users")
   }
 
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT
   implicit val logger: LoggingAdapter = log
-  val db = MongoClient(ServiceConfig.mongoHost, ServiceConfig.mongoPort)(ServiceConfig.dbName)
+
+  val mongoContainer = getContainerLink(ServiceConfig.dataContainer)
+  val mongoHost: String =  mongoContainer.map(_.host.ip).getOrElse(ServiceConfig.mongoHost)
+  val mongoPort: Int = mongoContainer.map(_.port).getOrElse(ServiceConfig.mongoPort)
+  val dbName: String = ServiceConfig.dbName
+  log.debug("{} container linked -> {}", ServiceConfig.dataContainer, mongoContainer)
+  val db = MongoClient(mongoHost, mongoPort)(dbName)
   val source = new MongoSource[UserEvent](db)
 
   def addUser(anchor: UserCreatedAnchor): Unit = {
@@ -66,7 +71,7 @@ class UserCommandGuardian extends Actor with ActorLogging {
   }.map { anchor: UserCreatedAnchor ⇒
     addUser(anchor)
     val msg = s"Successfully created user $username"
-    context.actorOf(Props(classOf[UserCommandActor], anchor, source), anchor.uuid.get.toString)
+    context.actorOf(Props(classOf[UserCommandActor], anchor), anchor.uuid.get.toString)
     log.info(msg)
     Receipt(success = true, entity = anchor.uuid.get.toSid, message = msg)
   }.recover {

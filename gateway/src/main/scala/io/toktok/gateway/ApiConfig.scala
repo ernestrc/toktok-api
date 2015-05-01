@@ -3,7 +3,6 @@ package io.toktok.gateway
 import java.util.concurrent.TimeUnit
 
 import krakken.config.KrakkenConfig
-import krakken.utils.io._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -24,9 +23,7 @@ object ApiConfig extends KrakkenConfig {
     FiniteDuration(config.getDuration("toktok.actors.endpoint-fallback",
       TimeUnit.SECONDS), TimeUnit.SECONDS)
   
-  val USERS_CMD_LOCATION:String = getContainerLink("users_command").map(_.toAkkaUrl)
-    .getOrElse(config.getString("krakken.services.command.users"))
+  val USERS_CMD_LOCATION:String = config.getString("krakken.services.command.users")
 
-  val USERS_QUERY_LOCATION:String = getContainerLink("users_query").map(_.toAkkaUrl)
-    .getOrElse(config.getString("krakken.services.query.users"))
+  val USERS_QUERY_LOCATION:String = config.getString("krakken.services.query.users")
 }

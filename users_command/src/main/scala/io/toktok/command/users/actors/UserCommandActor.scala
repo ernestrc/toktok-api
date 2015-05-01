@@ -10,7 +10,7 @@ import krakken.utils.Implicits._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
 
-class UserCommandActor(anchor: UserCreatedAnchor, val source: MongoSource[UserEvent]) extends EventSourcedCommandActor[UserEvent] {
+class UserCommandActor(anchor: UserCreatedAnchor) extends EventSourcedCommandActor[UserEvent] {
 
   implicit val system: ActorSystem = context.system
 

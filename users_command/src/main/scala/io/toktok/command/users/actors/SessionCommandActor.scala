@@ -6,7 +6,7 @@ import krakken.dal.MongoSource
 import krakken.model._
 import krakken.system.EventSourcedCommandActor
 
-class SessionCommandActor(anchor: SessionCreatedAnchor, val source: MongoSource[SessionEvent], opentok: OpenTok)
+class SessionCommandActor(anchor: SessionCreatedAnchor, opentok: OpenTok)
   extends EventSourcedCommandActor[SessionEvent] {
 
   override implicit val entityId: Option[SID] = Some(anchor.opentokSessionId)

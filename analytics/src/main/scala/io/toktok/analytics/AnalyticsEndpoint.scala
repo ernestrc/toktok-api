@@ -6,12 +6,16 @@ import akka.routing.FromConfig
 import akka.util.Timeout
 import com.mongodb.casbah.MongoClient
 import krakken.http.Endpoint
+import krakken.utils.io._
 import spray.routing.Route
 
 class AnalyticsEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
-  val client: MongoClient = MongoClient(ApiConfig.mongoHost, ApiConfig.mongoPort)
-  val db = client(ApiConfig.dbName)
+  val mongoContainer = getContainerLink(ApiConfig.dataContainer)
+  val mongoHost: String =  mongoContainer.map(_.host.ip).getOrElse(ApiConfig.mongoHost)
+  val mongoPort: Int = mongoContainer.map(_.port).getOrElse(ApiConfig.mongoPort)
+  val dbName: String = ApiConfig.dbName
+  val db = MongoClient(mongoHost, mongoPort)(dbName)
 
   import system.dispatcher
 

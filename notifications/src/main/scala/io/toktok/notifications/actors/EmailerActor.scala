@@ -5,17 +5,16 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.mongodb.casbah.MongoClient
 import com.novus.salat._
-import krakken.model.ctx
 import com.postmark.{Message, PostmarkActor}
 import io.toktok.model.{UserEvent, _}
 import io.toktok.notifications.ServiceConfig
-import krakken.config.KrakkenConfig
 import krakken.dal.MongoSource
-import krakken.model._
+import krakken.model.{ctx, _}
 import krakken.system.EventSourcedCommandActor
+import krakken.utils.io._
 import play.twirl.api.Html
 
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Await, Future}
 
 class EmailerActor extends EventSourcedCommandActor[NotificationEvent] {
 
@@ -24,9 +23,6 @@ class EmailerActor extends EventSourcedCommandActor[NotificationEvent] {
   override implicit val entityId: Option[SID] = None
 
   val postmarkActor: ActorRef = context.actorOf(Props[PostmarkActor])
-
-  val db = MongoClient(ServiceConfig.mongoHost,
-    ServiceConfig.mongoPort)(ServiceConfig.dbName)
 
   override val subscriptions: List[Subscription] =
     AkkaSubscription[UserCreatedAnchor, SendActivationEmailCommand](
@@ -38,9 +34,6 @@ class EmailerActor extends EventSourcedCommandActor[NotificationEvent] {
       ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
       a ⇒ SendNewPasswordCommand(a.entityId, a.newPassword, a.email)
     } :: Nil
-
-  override val source: MongoSource[NotificationEvent] =
-    new MongoSource[NotificationEvent](db)
 
   var sent: Int = 0
 

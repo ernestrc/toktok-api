@@ -1,28 +1,22 @@
 package io.toktok.command.users.actors
 
-import akka.actor.SupervisorStrategy.{Restart, Stop}
 import akka.actor._
-import akka.event.LoggingAdapter
-import akka.pattern._
 import akka.util.Timeout
-import com.mongodb.casbah.{MongoDB, MongoClient}
-import krakken.model.ctx
-import com.novus.salat.{Grater, _}
+import com.mongodb.casbah.MongoClient
+import com.novus.salat._
 import com.opentok.{MediaMode, OpenTok, SessionProperties}
 import io.toktok.command.users.ServiceConfig
 import io.toktok.model._
-import krakken.config.KrakkenConfig
 import krakken.dal.MongoSource
-import krakken.model._
+import krakken.model.{ctx, _}
 import krakken.system.EventSourcedCommandActor
-
-import scala.concurrent.Future
+import krakken.utils.io._
 
 
 class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
 
   def newChild(anchor: SessionCreatedAnchor) = {
-    context.actorOf(Props(classOf[SessionCommandActor], anchor, source, opentok), anchor.opentokSessionId)
+    context.actorOf(Props(classOf[SessionCommandActor], anchor, opentok), anchor.opentokSessionId)
   }
 
   override def preStart(): Unit = {
@@ -34,14 +28,9 @@ class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
     subscriptions.foreach(_.subscribe())
   }
 
-  val db: MongoDB = MongoClient(ServiceConfig.mongoHost,
-    ServiceConfig.mongoPort)(ServiceConfig.dbName)
-
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT
   override implicit val entityId: Option[SID] = None
   val opentok = new OpenTok(ServiceConfig.OPENTOK_KEY, ServiceConfig.OPENTOK_SECRET)
-  val source: MongoSource[SessionEvent] =
-    new MongoSource[SessionEvent](db)
 
   override val eventProcessor: PartialFunction[Event, Unit] = {
     case anchor: SessionCreatedAnchor ⇒ newChild(anchor)
@@ -54,7 +43,7 @@ class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {
       SessionCreatedAnchor(id, ses.getSessionId) :: Nil
   }
 
-  val subscriptions: List[Subscription] =
+  lazy val subscriptions: List[Subscription] =
     AkkaSubscription[UserActivatedEvent, GenerateSessionCommand](
       grater[UserActivatedEvent], db, ServiceConfig.collectionsHost(classOf[UserEvent].getSimpleName),
       ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {

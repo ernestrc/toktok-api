@@ -1,12 +1,13 @@
 package io.toktok.query.users.actors
 
-import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah._
+import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat._
 import io.toktok.model._
 import io.toktok.query.users.ServiceConfig
 import krakken.model.{ctx, _}
 import krakken.system.EventSourcedQueryActor
+import krakken.utils.io._
 import org.bson.types.ObjectId
 
 import scala.collection.mutable.ArrayBuffer
@@ -14,9 +15,6 @@ import scala.collection.mutable.ArrayBuffer
 class UserQueryGuardian extends EventSourcedQueryActor[UserEvent] {
 
   import context.dispatcher
-
-  override val db: Imports.MongoDB =
-    MongoClient(ServiceConfig.mongoHost, ServiceConfig.mongoPort)(ServiceConfig.dbName)
 
   case class OnlineTimeout(userId: SID)
 
