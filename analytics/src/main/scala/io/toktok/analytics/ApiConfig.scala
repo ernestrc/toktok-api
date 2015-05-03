@@ -3,7 +3,7 @@ package io.toktok.analytics
 import java.util.concurrent.TimeUnit
 
 import krakken.config.KrakkenConfig
-import krakken.utils.io._
+import krakken.io._
 
 import scala.concurrent.duration.FiniteDuration
 

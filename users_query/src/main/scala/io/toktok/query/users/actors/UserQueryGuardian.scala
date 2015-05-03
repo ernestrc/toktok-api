@@ -5,9 +5,10 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.novus.salat._
 import io.toktok.model._
 import io.toktok.query.users.ServiceConfig
+import krakken.dal.{AkkaSubscription, Subscription}
 import krakken.model.{ctx, _}
 import krakken.system.EventSourcedQueryActor
-import krakken.utils.io._
+import krakken.io._
 import org.bson.types.ObjectId
 
 import scala.collection.mutable.ArrayBuffer

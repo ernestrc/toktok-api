@@ -1,28 +1,26 @@
 package io.toktok.analytics
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSelection, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.routing.FromConfig
 import akka.util.Timeout
 import com.mongodb.casbah.MongoClient
 import krakken.http.Endpoint
-import krakken.utils.io._
+import krakken.io._
 import spray.routing.Route
 
-class AnalyticsEndpoint(implicit val system: ActorSystem) extends Endpoint {
+import scala.concurrent.Await
+import scala.util.Try
 
-  val mongoContainer = getContainerLink(ApiConfig.dataContainer)
-  val mongoHost: String =  mongoContainer.map(_.host.ip).getOrElse(ApiConfig.mongoHost)
-  val mongoPort: Int = mongoContainer.map(_.port).getOrElse(ApiConfig.mongoPort)
-  val dbName: String = ApiConfig.dbName
-  val db = MongoClient(mongoHost, mongoPort)(dbName)
+class AnalyticsEndpoint(implicit val system: ActorSystem) extends Endpoint {
 
   import system.dispatcher
 
   implicit val timeout:Timeout = ApiConfig.ENDPOINT_TIMEOUT
 
-  val persister: ActorRef = system.actorOf(Props(classOf[AnalyticsPersister], db)
-    .withRouter(FromConfig()), "AnalyticsPersister")
+  val persisterName = "AnalyticsPersister"
+  val persister: ActorRef = system.actorOf(Props(classOf[AnalyticsPersister]), persisterName)
+  val persistersPath: ActorSelection = system.actorSelection(system / persisterName / AnalyticsPersister.routerName)
 
   override def route: Route = {
     pathPrefix("v1"){
@@ -30,7 +28,7 @@ class AnalyticsEndpoint(implicit val system: ActorSystem) extends Endpoint {
         post{
           entity(as[String]) { str ⇒
             complete {
-              persister.ask(str).mapTo[String]
+              persistersPath.ask(str).mapTo[String]
             }
           }
         }

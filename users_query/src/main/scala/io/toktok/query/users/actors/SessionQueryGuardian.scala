@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, Props}
 import com.novus.salat._
 import io.toktok.model._
 import io.toktok.query.users.ServiceConfig
+import krakken.dal.{AkkaSubscription, Subscription}
 import krakken.model.Receipt.Empty
 import krakken.model.{ctx, _}
 import krakken.system.EventSourcedQueryActor

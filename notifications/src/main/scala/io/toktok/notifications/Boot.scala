@@ -3,7 +3,7 @@ package io.toktok.notifications
 import akka.actor.Props
 import io.toktok.notifications.actors.EmailerActor
 import krakken.MicroService
-import krakken.model.EndpointProps
+import krakken.http.EndpointProps
 
 object Boot extends App {
 

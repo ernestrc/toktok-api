@@ -2,7 +2,7 @@ package io.toktok.gateway
 
 import io.toktok.gateway.endpoints.{SessionEndpoint, UserEndpoint}
 import krakken.MicroService
-import krakken.model.EndpointProps
+import krakken.http.EndpointProps
 
 object Boot extends App {
 

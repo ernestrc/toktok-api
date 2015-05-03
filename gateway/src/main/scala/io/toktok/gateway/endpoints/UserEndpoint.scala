@@ -11,7 +11,7 @@ import io.toktok.query.users.actors.UserQueryGuardian
 import krakken.http.CQRSEndpoint
 import krakken.model.ctx
 import krakken.utils.Implicits.{graterFromResponseUnmarshaller, pimpedFutureOfReceipt}
-import krakken.utils.io._
+import krakken.io._
 import spray.routing.Route
 
 class UserEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint {

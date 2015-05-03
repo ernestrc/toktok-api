@@ -4,6 +4,7 @@ import com.mongodb.casbah.{MongoDB, MongoClient, Imports}
 import com.novus.salat.Grater
 import io.toktok.model.{GetUserSession, SessionCreatedAnchor, SessionEvent, UserSession}
 import io.toktok.query.users.ServiceConfig
+import krakken.dal.Subscription
 import krakken.model._
 import krakken.system.EventSourcedQueryActor
 

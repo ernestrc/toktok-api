@@ -8,7 +8,7 @@ import io.toktok.gateway.ApiConfig
 import io.toktok.model.{GenerateTokenCommand, GetUserSession, TokenCreatedEvent, UserSession}
 import io.toktok.query.users.actors.SessionQueryGuardian
 import krakken.http.CQRSEndpoint
-import krakken.utils.io._
+import krakken.io._
 import spray.routing.{PathMatchers, Route}
 
 class SessionEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint {

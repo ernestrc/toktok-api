@@ -7,10 +7,10 @@ import com.novus.salat._
 import com.opentok.{MediaMode, OpenTok, SessionProperties}
 import io.toktok.command.users.ServiceConfig
 import io.toktok.model._
-import krakken.dal.MongoSource
+import krakken.dal.{AkkaSubscription, Subscription, MongoSource}
 import krakken.model.{ctx, _}
 import krakken.system.EventSourcedCommandActor
-import krakken.utils.io._
+import krakken.io._
 
 
 class SessionCommandGuardian extends EventSourcedCommandActor[SessionEvent] {

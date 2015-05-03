@@ -1,7 +1,9 @@
 package io.toktok.analytics
 
+import akka.actor.Props
 import krakken.MicroService
-import krakken.model.EndpointProps
+import krakken.http.EndpointProps
+import krakken.io.{Service, DiscoveryActor}
 
 object Boot extends App{
 

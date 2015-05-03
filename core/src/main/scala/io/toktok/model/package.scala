@@ -2,7 +2,7 @@ package io.toktok
 
 import com.novus.salat.Grater
 import krakken.macros.Macros._
-import krakken.model.{FromHintGrater, TypeHint}
+import krakken.model.FromHintGrater
 import krakken.model.ctx
 
 /**

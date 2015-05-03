@@ -3,7 +3,7 @@ package io.toktok.command.users.actors
 import akka.actor._
 import io.toktok.command.users.Exceptions.{WrongEmailPasswordException, UserAlreadyActivatedException, WrongPasswordException}
 import io.toktok.model._
-import krakken.dal.MongoSource
+import krakken.dal.{Subscription, MongoSource}
 import krakken.model._
 import krakken.system.EventSourcedCommandActor
 import krakken.utils.Implicits._

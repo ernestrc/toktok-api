@@ -8,10 +8,10 @@ import com.novus.salat._
 import com.postmark.{Message, PostmarkActor}
 import io.toktok.model.{UserEvent, _}
 import io.toktok.notifications.ServiceConfig
-import krakken.dal.MongoSource
+import krakken.dal.{AkkaSubscription, Subscription, MongoSource}
 import krakken.model.{ctx, _}
 import krakken.system.EventSourcedCommandActor
-import krakken.utils.io._
+import krakken.io._
 import play.twirl.api.Html
 
 import scala.concurrent.{Await, Future}

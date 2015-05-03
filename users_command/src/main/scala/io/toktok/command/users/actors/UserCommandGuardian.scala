@@ -14,7 +14,7 @@ import io.toktok.model._
 import krakken.dal.MongoSource
 import krakken.model.{Command, Receipt, SID}
 import krakken.utils.Implicits._
-import krakken.utils.io._
+import krakken.io._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
 
