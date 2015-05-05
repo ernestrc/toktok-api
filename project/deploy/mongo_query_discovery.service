@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce Mongo Query
+BindsTo=mongo_query.service
+After=mongo_query.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /service/mongo_query '%H:27018' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /service/mongo_query
+
+[X-Fleet]
+MachineOf=mongo_query.service

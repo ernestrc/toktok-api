@@ -1,0 +1,12 @@
+[Unit]
+Description=Notifications microservice
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill notifications
+ExecStartPre=-/usr/bin/docker rm notifications
+ExecStartPre=/usr/bin/docker pull toktok/notifications:0.3-SNAPSHOT
+ExecStart=/usr/bin/docker run --name notifications -p 28003:28003 --env ETCD_ENDPOINT=172.17.42.1:4001 -v /etc/toktok/notifications:/etc/toktok -v /var/log/toktok:/var/log/toktok toktok/notifications:0.3-SNAPSHOT
+ExecStop=/usr/bin/docker stop notifications

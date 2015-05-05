@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce Mongo Command
+BindsTo=mongo_command.service
+After=mongo_command.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /service/mongo_command '%H:27017' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /service/mongo_command
+
+[X-Fleet]
+MachineOf=mongo_command.service

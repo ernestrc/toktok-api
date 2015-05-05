@@ -3,20 +3,34 @@ package io.toktok.notifications.actors
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.mongodb.casbah.MongoClient
 import com.novus.salat._
 import com.postmark.{Message, PostmarkActor}
 import io.toktok.model.{UserEvent, _}
 import io.toktok.notifications.ServiceConfig
-import krakken.dal.{AkkaSubscription, Subscription, MongoSource}
+import krakken.dal.{AkkaSubscription, Subscription}
+import krakken.io._
 import krakken.model.{ctx, _}
 import krakken.system.EventSourcedCommandActor
-import krakken.io._
 import play.twirl.api.Html
 
 import scala.concurrent.{Await, Future}
+import scala.util.Try
 
 class EmailerActor extends EventSourcedCommandActor[NotificationEvent] {
+
+  val userEvent = classOf[UserEvent].getSimpleName
+
+  override def preStart(): Unit = {
+    val mongoContainer: Option[Service] = Try(Await.result(discoveryActor.ask(
+      DiscoveryActor.Find(ServiceConfig.collectionsSourceContainer(userEvent)))(ServiceConfig.ACTOR_TIMEOUT)
+      .mapTo[Service], ServiceConfig.ACTOR_TIMEOUT))
+      .toOption
+    val mongoHost: String =  mongoContainer.map(_.host.ip).getOrElse(ServiceConfig.collectionsConfigHost(userEvent))
+    val mongoPort: Int = mongoContainer.map(_.port).getOrElse(ServiceConfig.collectionsPort(userEvent))
+      userEventSourceHost = Some(mongoHost)
+      userEventSourcePort = Some(mongoPort)
+      super.preStart()
+  }
 
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT
 
@@ -24,14 +38,17 @@ class EmailerActor extends EventSourcedCommandActor[NotificationEvent] {
 
   val postmarkActor: ActorRef = context.actorOf(Props[PostmarkActor])
 
-  override val subscriptions: List[Subscription] =
+  var userEventSourceHost: Option[String] = None
+  var userEventSourcePort: Option[Int] = None
+
+  override lazy val subscriptions: List[Subscription] =
     AkkaSubscription[UserCreatedAnchor, SendActivationEmailCommand](
-      grater[UserCreatedAnchor], db, ServiceConfig.collectionsHost(classOf[UserEvent].getSimpleName),
-      ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
+      grater[UserCreatedAnchor], db, userEventSourceHost.get, userEventSourcePort.get,
+      ServiceConfig.collectionsDB(userEvent)) {
       a ⇒ SendActivationEmailCommand(a.uuid.get.toString, a.username, a.email)
     } :: AkkaSubscription[SendNewPasswordEvent, SendNewPasswordCommand](
-      grater[SendNewPasswordEvent], db, ServiceConfig.collectionsHost(classOf[UserEvent].getSimpleName),
-      ServiceConfig.collectionsDB(classOf[UserEvent].getSimpleName)) {
+      grater[SendNewPasswordEvent], db, userEventSourceHost.get, userEventSourcePort.get,
+      ServiceConfig.collectionsDB(userEvent)) {
       a ⇒ SendNewPasswordCommand(a.entityId, a.newPassword, a.email)
     } :: Nil
 

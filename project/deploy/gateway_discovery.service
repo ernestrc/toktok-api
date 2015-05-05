@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce Gateway
+BindsTo=gateway.service
+After=gateway.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /service/gateway '%H:8080' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /service/gateway
+
+[X-Fleet]
+MachineOf=gateway.service

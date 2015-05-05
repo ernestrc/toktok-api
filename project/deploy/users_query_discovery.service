@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce Users-command side microservice
+BindsTo=users_query.service
+After=users_query.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /service/users_query '%H:28002' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /service/users_query
+
+[X-Fleet]
+MachineOf=users_query.service

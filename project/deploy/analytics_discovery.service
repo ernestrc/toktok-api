@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce Analytics Microservice
+BindsTo=analytics.service
+After=analytics.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /service/analytics '%H:4646' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /service/analytics
+
+[X-Fleet]
+MachineOf=analytics.service

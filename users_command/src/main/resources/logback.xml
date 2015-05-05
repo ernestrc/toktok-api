@@ -6,6 +6,7 @@
         </encoder>
     </appender>
     <logger name="com.typesafe.atmos.trace" level="DEBUG" />
+    <logger name="akka.remote.RemoteWatcher" level="INFO" />
     <logger name="spray.can.server.HttpServerConnection" level="DEBUG" />
     <logger name="spray.can.client.HttpClientConnection" level="DEBUG" />
     <logger name="spray.can.client.HttpHostConnector" level="DEBUG" />

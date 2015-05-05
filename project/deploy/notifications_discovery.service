@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce Notifications Microservice
+BindsTo=notifications.service
+After=notifications.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /service/notifications '%H:28003' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /service/notifications
+
+[X-Fleet]
+MachineOf=notifications.service

@@ -1,0 +1,12 @@
+[Unit]
+Description=Analytics http endpoint
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill analytics
+ExecStartPre=-/usr/bin/docker rm analytics
+ExecStartPre=/usr/bin/docker pull toktok/analytics:0.3-SNAPSHOT
+ExecStart=/usr/bin/docker run --name analytics -p 4646:4646 -v /etc/toktok/analytics:/etc/toktok --env ETCD_ENDPOINT=172.17.42.1:4001 -v /var/log/toktok:/var/log/toktok toktok/analytics:0.3-SNAPSHOT
+ExecStop=/usr/bin/docker stop analytics

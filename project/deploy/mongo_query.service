@@ -1,0 +1,15 @@
+[Unit]
+Description=mongo_query
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill mongo_query
+ExecStartPre=-/usr/bin/docker rm mongo_query
+ExecStartPre=/usr/bin/docker pull toktok/mongodb:1.0
+ExecStart=/usr/bin/docker run --name mongo_query -p 27018:27017 -v /data/q:/data/db toktok/mongodb:1.0
+ExecStop=/usr/bin/docker stop mongo_query
+
+[X-Fleet]
+MachineID=dedb69e97a5977401b4f86cfc41c9aa3

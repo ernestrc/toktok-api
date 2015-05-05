@@ -1,0 +1,12 @@
+[Unit]
+Description=Users Query-side Microservice
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill users_query
+ExecStartPre=-/usr/bin/docker rm users_query
+ExecStartPre=/usr/bin/docker pull toktok/users_query:0.3-SNAPSHOT
+ExecStart=/usr/bin/docker run --name users_query -p 28002:28002 --env ETCD_ENDPOINT=172.17.42.1:4001 -v /etc/toktok/users_query:/etc/toktok -v /var/log/toktok:/var/log/toktok toktok/users_query:0.3-SNAPSHOT
+ExecStop=/usr/bin/docker stop users_query

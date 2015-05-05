@@ -1,0 +1,15 @@
+[Unit]
+Description=mongo_analytics
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill mongo_analytics
+ExecStartPre=-/usr/bin/docker rm mongo_analytics
+ExecStartPre=/usr/bin/docker pull toktok/mongodb:1.0
+ExecStart=/usr/bin/docker run --name mongo_analytics -p 27019:27017 -v /data/analytics:/data/db toktok/mongodb:1.0
+ExecStop=/usr/bin/docker stop mongo_analytics
+
+[X-Fleet]
+MachineID=35754e454fd4d2e5f4e5823c9e704916

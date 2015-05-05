@@ -1,0 +1,11 @@
+[Unit]
+Description=Announce Mongo Analytics
+BindsTo=mongo_analytics.service
+After=mongo_analytics.service
+
+[Service]
+ExecStart=/bin/sh -c "while true; do etcdctl set /service/mongo_analytics '%H:27019' --ttl 60;sleep 45;done"
+ExecStop=/usr/bin/etcdctl rm /service/mongo_analytics
+
+[X-Fleet]
+MachineOf=mongo_analytics.service
