@@ -1,6 +1,6 @@
 package io.toktok.analytics
 
-import akka.actor.{ActorSelection, ActorRef, ActorSystem, Props}
+import akka.actor._
 import akka.pattern.ask
 import akka.routing.FromConfig
 import akka.util.Timeout
@@ -12,15 +12,15 @@ import spray.routing.Route
 import scala.concurrent.Await
 import scala.util.Try
 
-class AnalyticsEndpoint(implicit val system: ActorSystem) extends Endpoint {
+class AnalyticsEndpoint(implicit val context: ActorContext) extends Endpoint {
 
-  import system.dispatcher
+  import context.dispatcher
 
   implicit val timeout:Timeout = ApiConfig.ENDPOINT_TIMEOUT
 
   val persisterName = "AnalyticsPersister"
-  val persister: ActorRef = system.actorOf(Props(classOf[AnalyticsPersister]), persisterName)
-  val persistersPath: ActorSelection = system.actorSelection(system / persisterName / AnalyticsPersister.routerName)
+  val persister: ActorRef = context.actorOf(Props(classOf[AnalyticsPersister]), persisterName)
+  val persistersPath: ActorSelection = context.actorSelection(context.system / persisterName / AnalyticsPersister.routerName)
 
   override def route: Route = {
     pathPrefix("v1"){

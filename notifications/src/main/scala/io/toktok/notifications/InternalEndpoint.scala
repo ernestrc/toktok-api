@@ -1,33 +1,37 @@
 package io.toktok.notifications
 
-import akka.actor.{ActorSelection, ActorSystem}
+import java.util.concurrent.TimeUnit
+
+import akka.actor.{ActorContext, ActorRef, ActorSelection}
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import krakken.model.ctx
 import com.novus.salat.grater
 import io.toktok.model.ChangeUserPasswordCommand
-import krakken.http.CQRSEndpoint
+import krakken.http.GatewayEndpoint
+import krakken.model.ctx
 import krakken.utils.Implicits._
 import spray.httpx.PlayTwirlSupport
 import spray.routing.Route
 
+import scala.concurrent.duration.Duration
+
 /**
  * Created by ernest on 4/4/15.
  */
-class InternalEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint with PlayTwirlSupport {
+class InternalEndpoint(implicit val context: ActorContext) extends GatewayEndpoint with PlayTwirlSupport {
 
-  override val remoteQueryLoc: String = ""
+  override val queryService: String = ""
   override val remoteQueryGuardianPath: String = ""
-  override val log: LoggingAdapter = system.log
-  override val commandGuardianActorSelection: ActorSelection = system.actorSelection("")
+  override val log: LoggingAdapter = context.system.log
+  override val commandGuardianActorSelection: ActorSelection = context.actorSelection("")
   override val remoteCommandGuardianPath: String = ""
-  override val remoteCommandLoc: String = ""
-  implicit val timeout: Timeout = Timeout(10L)
-  val fallbackTimeout: Timeout = Timeout(20L)
+  override val commandService: String = ""
+  implicit val timeout: Timeout = Duration(10L, TimeUnit.SECONDS)
+  val fallbackTimeout: Timeout = Duration(20L, TimeUnit.SECONDS)
 
   implicit val cmdGrater = graterMarshallerConverter(grater[ChangeUserPasswordCommand])
 
-  override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
+  override val route: (ActorRef, ActorRef) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
     path("internal") {
       post {
         complete {

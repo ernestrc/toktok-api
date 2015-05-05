@@ -1,6 +1,6 @@
 package io.toktok.gateway.endpoints
 
-import akka.actor.{ActorSelection, ActorSystem}
+import akka.actor.{ActorContext, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.novus.salat.grater
@@ -8,30 +8,26 @@ import io.toktok.command.users.actors.UserCommandGuardian
 import io.toktok.gateway.ApiConfig
 import io.toktok.model._
 import io.toktok.query.users.actors.UserQueryGuardian
-import krakken.http.CQRSEndpoint
+import krakken.http.GatewayEndpoint
 import krakken.model.ctx
 import krakken.utils.Implicits.{graterFromResponseUnmarshaller, pimpedFutureOfReceipt}
-import krakken.io._
 import spray.routing.Route
 
-class UserEndpoint(implicit val system: ActorSystem) extends CQRSEndpoint {
+class UserEndpoint(implicit val context: ActorContext) extends GatewayEndpoint {
 
-  import system.dispatcher
+  import context.dispatcher
 
-  val remoteCommandLoc: String = getContainerLink("users_command")
-    .map(_.toAkkaUrl).getOrElse(ApiConfig.USERS_CMD_LOCATION)
+  val commandService: String = "users_command"
+  val queryService: String = "users_query"
   val remoteCommandGuardianPath = classOf[UserCommandGuardian].getSimpleName
-
-  override val remoteQueryLoc: String = getContainerLink("users_query")
-    .map(_.toAkkaUrl).getOrElse(ApiConfig.USERS_QUERY_LOCATION)
-  override val remoteQueryGuardianPath: String = classOf[UserQueryGuardian].getSimpleName
+  val remoteQueryGuardianPath: String = classOf[UserQueryGuardian].getSimpleName
 
   implicit val timeout: Timeout = ApiConfig.ENDPOINT_TIMEOUT
   val fallbackTimeout: Timeout = ApiConfig.ENDPOINT_FALLBACK_TIMEOUT
 
   implicit val graterCreateUser = grater[CreateUserCommand]
 
-  override val route: (ActorSelection, ActorSelection) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
+  override val route: (ActorRef, ActorRef) ⇒ Route = { (commandGuardian, queryGuardian) ⇒
     pathPrefix("v1") {
       pathPrefix("users") {
         pathEndOrSingleSlash {
