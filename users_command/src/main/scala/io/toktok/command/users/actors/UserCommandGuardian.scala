@@ -12,14 +12,14 @@ import io.toktok.command.users.Exceptions.UserExistsException
 import io.toktok.command.users.ServiceConfig
 import io.toktok.model._
 import krakken.dal.MongoSource
+import krakken.io._
 import krakken.model.{Command, Receipt, SID}
 import krakken.utils.Implicits._
-import krakken.io._
 import org.bson.types.ObjectId
 import org.mindrot.jbcrypt.BCrypt
 
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 
 class UserCommandGuardian extends Actor with ActorLogging {
 
@@ -45,7 +45,11 @@ class UserCommandGuardian extends Actor with ActorLogging {
   implicit val timeout: Timeout = ServiceConfig.ACTOR_TIMEOUT
   implicit val logger: LoggingAdapter = log
 
-  val mongoContainer = getContainerLink(ServiceConfig.dataContainer)
+  val discoveryActor = context.actorOf(Props[DiscoveryActor])
+  val mongoContainer: Option[Service] = Try(Await.result(discoveryActor.ask(
+    DiscoveryActor.Find(ServiceConfig.dataContainer))(ServiceConfig.ACTOR_TIMEOUT)
+    .mapTo[Service], ServiceConfig.ACTOR_TIMEOUT))
+    .toOption
   val mongoHost: String =  mongoContainer.map(_.host.ip).getOrElse(ServiceConfig.mongoHost)
   val mongoPort: Int = mongoContainer.map(_.port).getOrElse(ServiceConfig.mongoPort)
   val dbName: String = ServiceConfig.dbName
