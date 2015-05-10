@@ -20,7 +20,7 @@ class AnalyticsEndpoint(implicit val context: ActorContext) extends Endpoint {
 
   val persisterName = "AnalyticsPersister"
   val persister: ActorRef = context.actorOf(Props(classOf[AnalyticsPersister]), persisterName)
-  val persistersPath: ActorSelection = context.actorSelection(context.system / persisterName / AnalyticsPersister.routerName)
+  val persistersPath: ActorSelection = context.actorSelection(context.system / "http"/ "handler"/ persisterName / AnalyticsPersister.routerName)
 
   override def route: Route = {
     pathPrefix("v1"){
